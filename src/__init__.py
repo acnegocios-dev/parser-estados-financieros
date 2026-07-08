@@ -1,0 +1,2 @@
+"""Local financial statements prototype."""
+
