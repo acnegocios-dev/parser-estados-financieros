@@ -4,6 +4,7 @@
 
 - `src.period.extract_period_variables(path)`: extrae RFC y periodo desde el nombre del archivo.
 - `src.period.period_variables_dict(path)`: devuelve esas variables como `dict`.
+- `src.parser.detect_mime_kind(path)`: detecta el contenedor real por contenido.
 - `src.parser.load_ooxml_workbook(path)`: carga un paquete OOXML con `openpyxl` desde file-like, incluso si la extension es `.xls`.
 - `src.parser.parse_balanza(path, sheet_name="Balanza")`: devuelve un `ParsedBalanza`.
 - `src.parser.parse_balanza_dict(path, sheet_name="Balanza")`: version serializable como `dict`.
@@ -55,14 +56,32 @@ Los importes vacios se normalizan como `Decimal("0")`; en `to_dict()` salen como
 
 `ParsedBalanza` tambien expone:
 
+- `detected_mime_kind`
 - `company_name`
+- `content_rfc`
 - `content_period_ym`
 
-El periodo del contenido se compara contra el periodo del nombre de archivo. Si
-no coincide, se agrega una entrada en `structure_issues`.
+El periodo y RFC del contenido se comparan contra el nombre de archivo. Si no
+coinciden, el parser rechaza la corrida con `ValueError`.
+
+## Tipo real de archivo
+
+El parser no decide por extension. Primero clasifica el contenido como:
+
+- `ooxml_zip`
+- `ole_xls`
+- `html_excel`
+- `unknown`
+
+La version inicial acepta `ooxml_zip`, incluso cuando la extension visible sea
+`.xls`, como ocurre con el ejemplo de Auditalo. Los otros tipos quedan
+detectados pero rechazados hasta implementar lectores especificos.
 
 ## Reportes
 
 `ParsedBalanza.empty_rows` contiene los numeros de filas vacias posteriores al encabezado.
 
 `ParsedBalanza.structure_issues` contiene filas no vacias con codigo de cuenta invalido o importes no numericos. Las filas descriptivas antes de la primera cuenta valida se ignoran como preambulo.
+
+No se usa la suma global de todas las filas como cuadre final porque la balanza
+incluye cuentas acumuladoras y cuentas detalle.

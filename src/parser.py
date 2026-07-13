@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import zipfile
+from collections import Counter
 from dataclasses import asdict, dataclass, field
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -17,6 +18,10 @@ except ImportError:  # pragma: no cover - supports PYTHONPATH=src usage.
 
 REQUIRED_SHEET = "Balanza"
 REQUIRED_COLUMNS = ("Cuenta", "Saldo Inicial", "Debe", "Haber", "SaldoFinal")
+OOXML_ZIP = "ooxml_zip"
+OLE_XLS = "ole_xls"
+HTML_EXCEL = "html_excel"
+UNKNOWN_FILE = "unknown"
 
 _ACCOUNT_RE = re.compile(
     r"^\s*(?P<code>\d+(?:-\s*[A-Za-z0-9]+)*)\s+(?P<name>.+?)\s*$"
@@ -53,28 +58,44 @@ class RowIssue:
 
 
 @dataclass(frozen=True)
+class ParserWarning:
+    code: str
+    message: str
+    source_row: int | None = None
+
+    def to_dict(self) -> dict[str, object]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
 class ParsedBalanza:
     source_path: str
+    detected_mime_kind: str
     sheet_name: str
     period: PeriodVariables
     company_name: str | None
+    content_rfc: str | None
     content_period_ym: str | None
     header_row: int
     rows: tuple[BalanzaRow, ...]
     empty_rows: tuple[int, ...]
     structure_issues: tuple[RowIssue, ...]
+    warnings: tuple[ParserWarning, ...]
 
     def to_dict(self) -> dict[str, object]:
         return {
             "source_path": self.source_path,
+            "detected_mime_kind": self.detected_mime_kind,
             "sheet_name": self.sheet_name,
             "period": self.period.to_dict(),
             "company_name": self.company_name,
+            "content_rfc": self.content_rfc,
             "content_period_ym": self.content_period_ym,
             "header_row": self.header_row,
             "rows": [row.to_dict() for row in self.rows],
             "empty_rows": list(self.empty_rows),
             "structure_issues": [issue.to_dict() for issue in self.structure_issues],
+            "warnings": [warning.to_dict() for warning in self.warnings],
         }
 
 
@@ -82,27 +103,73 @@ def load_ooxml_workbook(path: str | Path):
     workbook_path = Path(path)
     if not workbook_path.exists():
         raise FileNotFoundError(workbook_path)
-    if not zipfile.is_zipfile(workbook_path):
-        raise ValueError(f"Workbook is not an OOXML ZIP package: {workbook_path}")
+    detected_mime_kind = detect_mime_kind(workbook_path)
+    if detected_mime_kind != OOXML_ZIP:
+        raise ValueError(
+            f"Workbook is not an OOXML ZIP package: {workbook_path} "
+            f"(detected_mime_kind={detected_mime_kind})"
+        )
 
     with workbook_path.open("rb") as fh:
         return load_workbook(fh, data_only=True, read_only=False)
 
 
+def detect_mime_kind(path: str | Path) -> str:
+    """Detect workbook container by file content, not by extension."""
+
+    workbook_path = Path(path)
+    if zipfile.is_zipfile(workbook_path):
+        return OOXML_ZIP
+
+    with workbook_path.open("rb") as fh:
+        prefix = fh.read(512)
+
+    if prefix.startswith(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"):
+        return OLE_XLS
+
+    stripped = prefix.lstrip().lower()
+    if stripped.startswith((b"<!doctype html", b"<html", b"<?xml")):
+        return HTML_EXCEL
+
+    return UNKNOWN_FILE
+
+
 def parse_balanza(path: str | Path, sheet_name: str = REQUIRED_SHEET) -> ParsedBalanza:
     workbook_path = Path(path)
     period = extract_period_variables(workbook_path)
+    detected_mime_kind = detect_mime_kind(workbook_path)
+    if detected_mime_kind != OOXML_ZIP:
+        raise ValueError(
+            f"Unsupported workbook content kind: {detected_mime_kind}. "
+            "Only OOXML ZIP workbooks are supported in the initial Auditalo parser."
+        )
     workbook = load_ooxml_workbook(workbook_path)
     if sheet_name not in workbook.sheetnames:
         raise ValueError(f"Required sheet '{sheet_name}' not found. Sheets: {workbook.sheetnames}")
 
     worksheet = workbook[sheet_name]
-    company_name, content_period_ym = _extract_sheet_metadata(worksheet)
+    company_name, content_rfc, content_period_ym = _extract_sheet_metadata(worksheet)
+    _validate_sheet_metadata(period, content_rfc, content_period_ym)
     header_row, column_map = _find_header_row(worksheet.iter_rows(values_only=True))
 
     rows: list[BalanzaRow] = []
     empty_rows: list[int] = []
     issues: list[RowIssue] = []
+    warnings: list[ParserWarning] = []
+    if content_rfc is None:
+        warnings.append(
+            ParserWarning(
+                code="rfc_no_encontrado_en_contenido",
+                message="No se encontro RFC en el contenido; se conserva el RFC del nombre de archivo.",
+            )
+        )
+    if content_period_ym is None:
+        warnings.append(
+            ParserWarning(
+                code="periodo_no_encontrado_en_contenido",
+                message="No se encontro periodo interno; se conserva el periodo del nombre de archivo.",
+            )
+        )
     data_started = False
 
     for row_number in range(header_row + 1, worksheet.max_row + 1):
@@ -118,6 +185,15 @@ def parse_balanza(path: str | Path, sheet_name: str = REQUIRED_SHEET) -> ParsedB
         parsed_account = _parse_account(account_raw)
         if parsed_account is None:
             if data_started:
+                if _is_repeated_header(values):
+                    warnings.append(
+                        ParserWarning(
+                            code="encabezado_repetido_ignorado",
+                            message="Se ignoro un encabezado repetido dentro de los datos.",
+                            source_row=row_number,
+                        )
+                    )
+                    continue
                 issues.append(RowIssue(row_number, "Missing or invalid account code.", values))
             continue
 
@@ -142,27 +218,34 @@ def parse_balanza(path: str | Path, sheet_name: str = REQUIRED_SHEET) -> ParsedB
             )
         )
 
+    duplicate_counts = Counter(row.account_code for row in rows)
+    for account_code, count in sorted(duplicate_counts.items()):
+        if count > 1:
+            warnings.append(
+                ParserWarning(
+                    code="cuenta_repetida_agregada",
+                    message=(
+                        f"La cuenta {account_code} aparece {count} veces; se conservaran y agregaran "
+                        "sus renglones de detalle."
+                    ),
+                )
+            )
+
     if not rows:
         issues.append(RowIssue(header_row, "No account rows were parsed.", ()))
-    if content_period_ym and content_period_ym != period.period_ym:
-        issues.append(
-            RowIssue(
-                header_row,
-                f"Filename period {period.period_ym} differs from sheet period {content_period_ym}.",
-                (),
-            )
-        )
-
     return ParsedBalanza(
         source_path=str(workbook_path),
+        detected_mime_kind=detected_mime_kind,
         sheet_name=sheet_name,
         period=period,
         company_name=company_name,
+        content_rfc=content_rfc,
         content_period_ym=content_period_ym,
         header_row=header_row,
         rows=tuple(rows),
         empty_rows=tuple(empty_rows),
         structure_issues=tuple(issues),
+        warnings=tuple(warnings),
     )
 
 
@@ -211,6 +294,12 @@ def _is_empty(values: tuple[Any, ...]) -> bool:
     return all(value is None or _clean(value) == "" for value in values)
 
 
+def _is_repeated_header(values: tuple[Any, ...]) -> bool:
+    normalized = {_normalize_header(value) for value in values}
+    required = {_normalize_header(column) for column in REQUIRED_COLUMNS}
+    return required.issubset(normalized)
+
+
 def _clean(value: Any) -> str:
     return "" if value is None else str(value).strip()
 
@@ -219,8 +308,22 @@ def _normalize_header(value: Any) -> str:
     return re.sub(r"[^a-z0-9]", "", _clean(value).casefold())
 
 
-def _extract_sheet_metadata(worksheet) -> tuple[str | None, str | None]:
+def _validate_sheet_metadata(
+    period: PeriodVariables,
+    content_rfc: str | None,
+    content_period_ym: str | None,
+) -> None:
+    if content_period_ym and content_period_ym != period.period_ym:
+        raise ValueError(
+            f"Filename period {period.period_ym} differs from sheet period {content_period_ym}."
+        )
+    if content_rfc and content_rfc.upper() != period.rfc:
+        raise ValueError(f"Filename RFC {period.rfc} differs from sheet RFC {content_rfc.upper()}.")
+
+
+def _extract_sheet_metadata(worksheet) -> tuple[str | None, str | None, str | None]:
     company_name: str | None = None
+    content_rfc: str | None = None
     content_period_ym: str | None = None
     rfc_pattern = re.compile(r"\b[A-Z&Ñ]{3,4}\d{6}[A-Z0-9]{3}\b")
     period_pattern = re.compile(r"(\d{4})[-/](\d{1,2})")
@@ -230,13 +333,21 @@ def _extract_sheet_metadata(worksheet) -> tuple[str | None, str | None]:
             text = _clean(value)
             if not text:
                 continue
-            if company_name is None and rfc_pattern.search(text) and "periodo" not in text.casefold():
-                company_name = rfc_pattern.sub("", text).strip()
+            rfc_match = rfc_pattern.search(text)
+            if rfc_match and "periodo" not in text.casefold():
+                if content_rfc is None:
+                    content_rfc = rfc_match.group(0).upper()
+                if company_name is None:
+                    company_name = rfc_pattern.sub("", text).strip()
+            elif company_name is None and "periodo" not in text.casefold():
+                normalized = _normalize_header(text)
+                if normalized not in {_normalize_header(column) for column in REQUIRED_COLUMNS}:
+                    company_name = text
             if content_period_ym is None:
                 match = period_pattern.search(text)
                 if match:
                     content_period_ym = f"{int(match.group(1)):04d}-{int(match.group(2)):02d}"
-            if company_name and content_period_ym:
-                return company_name, content_period_ym
+            if company_name and content_rfc and content_period_ym:
+                return company_name, content_rfc, content_period_ym
 
-    return company_name, content_period_ym
+    return company_name, content_rfc, content_period_ym

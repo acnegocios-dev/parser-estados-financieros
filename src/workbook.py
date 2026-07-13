@@ -9,18 +9,17 @@ from __future__ import annotations
 import calendar
 from dataclasses import dataclass, field, is_dataclass
 from datetime import datetime, timezone
+import json
 from pathlib import Path
 import re
 import unicodedata
 from typing import Any, Iterable
 
 from openpyxl import Workbook, load_workbook
-from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-from openpyxl.utils import get_column_letter
-
-
+from openpyxl.styles import Alignment, Border, Color, Font, PatternFill, Protection, Side
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "sample-outputs"
+ER_STYLE_SPEC_PATH = Path(__file__).with_name("er_style_spec.json")
 
 ERROR_TOKENS = ("#REF!", "#DIV/0!", "#VALUE!", "#NAME?", "#N/A", "#NUM!", "#NULL!")
 MONTHS_ES = {
@@ -87,11 +86,11 @@ ER_LAYOUT = [
     {"row": 55, "label": "OTROS INGRESOS Y GASTOS", "kind": "section"},
     {"row": 56, "label": "Otros Productos", "key": "otros_productos"},
     {"row": 57, "label": "Otros Gastos", "key": "otros_gastos"},
-    {"row": 58, "label": "TOTAL OTROS INGRESOS", "kind": "subtotal", "formula": "{col}56-{col}57"},
+    {"row": 58, "label": "TOTAL OTROS INGRESOS", "kind": "subtotal", "formula": "SUM({col}56:{col}57)"},
     {"row": 60, "label": "RES. INT. DE FINANCIAMIENTO", "kind": "section"},
     {"row": 61, "label": "Productos Financieros", "key": "productos_financieros"},
     {"row": 62, "label": "Gastos Financieros", "key": "gastos_financieros"},
-    {"row": 63, "label": "TOTAL R. I. F.", "kind": "subtotal", "formula": "{col}61-{col}62"},
+    {"row": 63, "label": "TOTAL R. I. F.", "kind": "subtotal", "formula": "SUM({col}61:{col}62)"},
     {"row": 65, "label": "RESULTADO ANTES DE IMPUESTOS", "kind": "subtotal", "formula": "{col}53+{col}58+{col}63"},
     {"row": 67, "label": "ISR DEL EJERCICIO", "key": "isr_del_ejercicio"},
     {"row": 68, "label": "PTU DEL EJERCICIO", "key": "ptu_del_ejercicio"},
@@ -121,8 +120,10 @@ def build_er_workbook(
     missing_accounts.extend(_coerce_list(_read_field(dataset, ("missing", "not_found"))))
 
     wb = Workbook()
+    _configure_recalculation_on_open(wb)
     ws = wb.active
     ws.title = "ER"
+    ws.sheet_state = "visible"
     ws.sheet_view.showGridLines = False
 
     _write_header(ws, company, period)
@@ -140,6 +141,21 @@ def build_er_workbook(
         warnings=warnings,
         missing_accounts=missing_accounts,
     )
+
+
+def _configure_recalculation_on_open(workbook: Workbook) -> None:
+    """Ask Excel-compatible clients to fully recalculate formula cells."""
+
+    calculation = getattr(workbook, "calculation", None)
+    if calculation is None:
+        return
+    for attribute, value in (
+        ("calcMode", "auto"),
+        ("fullCalcOnLoad", True),
+        ("forceFullCalc", True),
+    ):
+        if hasattr(calculation, attribute):
+            setattr(calculation, attribute, value)
 
 
 def save_er_workbook(
@@ -200,7 +216,7 @@ def _write_header(ws, company: str, period: str) -> None:
     ws["B10"] = "Estado de Resultados"
     ws["B11"] = _period_caption(period)
     ws["B12"] = "(Importes expresados en pesos)"
-    ws["D15"] = "Del Periodo"
+    ws["D15"] = "Del Período "
     ws["F15"] = "%"
     ws["H15"] = "Acumulado"
     ws["J15"] = "%"
@@ -221,17 +237,14 @@ def _write_er_body(ws, line_values: dict[str, dict[str, Any]], warnings: list[st
 
         numeric_rows.append(row)
         if kind == "subtotal":
-            for column in ("D", "H"):
-                formula = "=" + str(spec["formula"]).format(col=column)
-                _set_formula(ws, f"{column}{row}", formula, formula_cells)
+            formula = "=" + str(spec["formula"]).format(col="H")
+            _set_formula(ws, f"H{row}", formula, formula_cells)
             continue
 
         values = _line_amounts(line_values.get(str(spec.get("key"))), warnings, label)
-        ws[f"D{row}"] = values["period"]
         ws[f"H{row}"] = values["accumulated"]
 
     for row in numeric_rows:
-        _set_formula(ws, f"F{row}", f'=IF($D$18=0,0,D{row}/$D$18)', formula_cells)
         _set_formula(ws, f"J{row}", f'=IF($H$18=0,0,H{row}/$H$18)', formula_cells)
 
     return formula_cells
@@ -254,57 +267,117 @@ def _sanitize_formula(formula: str) -> str:
 
 
 def _style_er_sheet(ws) -> None:
-    widths = {"A": 3, "B": 36, "C": 3, "D": 15, "E": 3, "F": 10, "G": 3, "H": 15, "I": 3, "J": 10}
-    for col, width in widths.items():
-        ws.column_dimensions[col].width = width
-    for row in range(1, 85):
-        ws.row_dimensions[row].height = 18
+    """Apply the versioned visual contract extracted from the manual ER."""
 
-    title_font = Font(name="Calibri", size=12, bold=True)
-    subtitle_font = Font(name="Calibri", size=11)
-    header_fill = PatternFill("solid", fgColor="D9EAF7")
-    section_fill = PatternFill("solid", fgColor="EDEDED")
-    subtotal_fill = PatternFill("solid", fgColor="D9EAD3")
-    thin = Side(style="thin", color="B7B7B7")
-    border = Border(bottom=thin)
+    spec = _load_er_style_spec()
+    geometry = spec["geometry"]
 
-    for cell in ("B9", "B10", "B11", "B12"):
-        ws[cell].alignment = Alignment(horizontal="center")
-    ws["B9"].font = title_font
-    ws["B10"].font = title_font
-    ws["B11"].font = subtitle_font
-    ws["B12"].font = Font(name="Calibri", size=10, italic=True)
-    for row in range(9, 13):
-        ws.merge_cells(start_row=row, start_column=2, end_row=row, end_column=10)
+    ws.sheet_format.defaultRowHeight = geometry["default_row_height"]
+    ws.sheet_format.defaultColWidth = geometry["default_column_width"]
+    ws.sheet_format.baseColWidth = geometry["base_column_width"]
+    for column, width in geometry["column_widths"].items():
+        ws.column_dimensions[column].width = width
 
-    for cell in ("D15", "F15", "H15", "J15"):
-        ws[cell].font = Font(bold=True)
-        ws[cell].alignment = Alignment(horizontal="center")
-        ws[cell].fill = header_fill
-        ws[cell].border = border
+    for row in range(1, 88):
+        ws.row_dimensions[row].height = None
+        ws.row_dimensions[row].hidden = False
+    for row, height in geometry["row_heights"].items():
+        ws.row_dimensions[int(row)].height = height
+    for row in geometry["hidden_rows"]:
+        ws.row_dimensions[int(row)].hidden = True
 
-    subtotal_rows = {int(spec["row"]) for spec in ER_LAYOUT if spec.get("kind") == "subtotal"}
-    section_rows = {int(spec["row"]) for spec in ER_LAYOUT if spec.get("kind") == "section"}
-    for spec in ER_LAYOUT:
-        row = int(spec["row"])
-        ws[f"B{row}"].alignment = Alignment(horizontal="left")
-        if row in section_rows:
-            for col in range(2, 11):
-                ws.cell(row=row, column=col).font = Font(bold=True)
-                ws.cell(row=row, column=col).fill = section_fill
-        if row in subtotal_rows:
-            for col in range(2, 11):
-                ws.cell(row=row, column=col).font = Font(bold=True)
-                ws.cell(row=row, column=col).fill = subtotal_fill
-                ws.cell(row=row, column=col).border = border
+    for merged_range in geometry["merged_ranges"]:
+        ws.merge_cells(merged_range)
 
-    for row in range(18, 71):
-        for cell in (f"D{row}", f"H{row}"):
-            ws[cell].number_format = '#,##0.00;[Red](#,##0.00);"-"'
-        for cell in (f"F{row}", f"J{row}"):
-            ws[cell].number_format = "0.00%"
+    for name, value in geometry["page_margins"].items():
+        setattr(ws.page_margins, name, value)
+    for name, value in geometry["page_setup"].items():
+        setattr(ws.page_setup, name, value)
+    ws.sheet_view.showGridLines = geometry["show_grid_lines"]
+    ws.sheet_view.topLeftCell = geometry["top_left_cell"]
+    ws.freeze_panes = geometry["freeze_panes"]
 
-    ws.freeze_panes = "A16"
+    for coordinate, style_id in spec["cells"].items():
+        cell = ws[coordinate]
+        _apply_style(cell, spec["styles"][style_id])
+
+
+def _load_er_style_spec() -> dict[str, Any]:
+    with ER_STYLE_SPEC_PATH.open(encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def _color_from_spec(value: dict[str, Any] | None) -> Color | None:
+    if not value:
+        return None
+    kwargs: dict[str, Any] = {"type": value["type"]}
+    for key in ("rgb", "indexed", "theme", "tint"):
+        if value.get(key) is not None:
+            kwargs[key] = value[key]
+    return Color(**kwargs)
+
+
+def _side_from_spec(value: dict[str, Any] | None) -> Side | None:
+    if not value:
+        return None
+    return Side(style=value.get("style"), color=_color_from_spec(value.get("color")))
+
+
+def _apply_style(cell: Any, spec: dict[str, Any]) -> None:
+    font = spec["font"]
+    cell.font = Font(
+        name=font["name"],
+        sz=font["size"],
+        b=font["bold"],
+        i=font["italic"],
+        underline=font["underline"],
+        strike=font["strike"],
+        color=_color_from_spec(font["color"]),
+        vertAlign=font["vertAlign"],
+        charset=font["charset"],
+        family=font["family"],
+        scheme=font["scheme"],
+        outline=font["outline"],
+        shadow=font["shadow"],
+        condense=font["condense"],
+        extend=font["extend"],
+    )
+    alignment = spec["alignment"]
+    cell.alignment = Alignment(
+        horizontal=alignment["horizontal"],
+        vertical=alignment["vertical"],
+        textRotation=alignment["textRotation"],
+        wrap_text=alignment["wrapText"],
+        shrink_to_fit=alignment["shrinkToFit"],
+        indent=alignment["indent"],
+        relativeIndent=alignment["relativeIndent"],
+        justifyLastLine=alignment["justifyLastLine"],
+        readingOrder=alignment["readingOrder"],
+    )
+    fill = spec["fill"]
+    cell.fill = PatternFill(
+        fill_type=fill["fillType"],
+        fgColor=_color_from_spec(fill["fgColor"]),
+        bgColor=_color_from_spec(fill["bgColor"]),
+    )
+    border = spec["border"]
+    cell.border = Border(
+        left=_side_from_spec(border["left"]),
+        right=_side_from_spec(border["right"]),
+        top=_side_from_spec(border["top"]),
+        bottom=_side_from_spec(border["bottom"]),
+        diagonal=_side_from_spec(border["diagonal"]),
+        diagonalUp=border["diagonalUp"],
+        diagonalDown=border["diagonalDown"],
+        outline=border["outline"],
+        vertical=_side_from_spec(border["vertical"]),
+        horizontal=_side_from_spec(border["horizontal"]),
+    )
+    protection = spec["protection"]
+    cell.protection = Protection(
+        locked=protection["locked"], hidden=protection["hidden"]
+    )
+    cell.number_format = spec["numberFormat"]
 
 
 def _metadata_from_inputs(dataset: Any, metadata: Any, source_path: str | Path | None) -> dict[str, Any]:

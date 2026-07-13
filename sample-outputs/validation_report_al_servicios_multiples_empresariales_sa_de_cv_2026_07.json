@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-07-08T17:41:58.120823+00:00",
-  "source_path": "C:\\Users\\MACC Servicios\\Documents\\Desarrollo\\Prototipo_Estados_Financieros\\sample-inputs\\balanza_SME170717GA0_2026_07.xls",
-  "output_xlsx": "C:\\Users\\MACC Servicios\\Documents\\Desarrollo\\Prototipo_Estados_Financieros\\sample-outputs\\estado_resultados_al_servicios_multiples_empresariales_sa_de_cv_2026_07.xlsx",
+  "generated_at": "2026-07-13T18:33:31.416650+00:00",
+  "source_path": "/opt/n8n/apps/estados-financieros/sample-inputs/balanza_SME170717GA0_2026_07.xls",
+  "output_xlsx": "/opt/n8n/apps/estados-financieros/sample-outputs/estado_resultados_al_servicios_multiples_empresariales_sa_de_cv_2026_07.xlsx",
   "period": {
     "source_filename": "balanza_SME170717GA0_2026_07.xls",
     "rfc": "SME170717GA0",
@@ -26,153 +26,1104 @@
       5,
       6
     ],
-    "structure_issues": []
+    "structure_issues": [],
+    "warnings": []
   },
   "engine": {
     "statement_lines": [
       {
-        "line_key": "ventas_ingresos_netos",
-        "label": "Ventas / ingresos netos",
-        "line_type": "mapped",
+        "key": "ingresos_por_servicios",
+        "line_key": "ingresos_por_servicios",
+        "label": "Ingresos por servicios",
+        "excel_row": 18,
         "amount_column": "H",
         "amount_cell": "H18",
-        "amount": 1978019.18,
-        "formula": null,
+        "period_amount": 1977920.26,
+        "accumulated_amount": 1977920.26,
+        "amount": 1977920.26,
         "percentage_column": "J",
         "percentage_of": "H18",
-        "percentage": 1.0
+        "percentage": 1.0,
+        "accounts": [
+          {
+            "source_row": 96,
+            "account_raw": "4110-0001   INGRESOS POR SERVICIOS T-0%",
+            "account_code": "4110-0001",
+            "account_name": "INGRESOS POR SERVICIOS T-0%",
+            "top_account": "4110",
+            "saldo_final": 1943205.54
+          },
+          {
+            "source_row": 97,
+            "account_raw": "4110-0002   INGRESOS POR SERVICIOS CON IVA",
+            "account_code": "4110-0002",
+            "account_name": "INGRESOS POR SERVICIOS CON IVA",
+            "top_account": "4110",
+            "saldo_final": 34051.72
+          },
+          {
+            "source_row": 98,
+            "account_raw": "4110-0003   INGRESOS POR ACTUALIZACIONES",
+            "account_code": "4110-0003",
+            "account_name": "INGRESOS POR ACTUALIZACIONES",
+            "top_account": "4110",
+            "saldo_final": 663.0
+          }
+        ],
+        "line_type": "mapped"
       },
       {
-        "line_key": "costo_ventas",
-        "label": "Costo de ventas",
-        "line_type": "mapped",
+        "key": "descuentos_o_bonificaciones",
+        "line_key": "descuentos_o_bonificaciones",
+        "label": "Descuentos o bonificaciones",
+        "excel_row": 19,
         "amount_column": "H",
-        "amount_cell": null,
-        "amount": 1654681.76,
-        "formula": null,
+        "amount_cell": "H19",
+        "period_amount": 0.0,
+        "accumulated_amount": 0.0,
+        "amount": 0.0,
         "percentage_column": "J",
         "percentage_of": "H18",
-        "percentage": 0.8365
+        "percentage": 0.0,
+        "accounts": [],
+        "line_type": "mapped"
       },
       {
+        "key": "ingresos_netos",
+        "line_key": "ingresos_netos",
+        "label": "Ingresos netos",
+        "excel_row": 20,
+        "amount_column": "H",
+        "amount_cell": "H20",
+        "period_amount": 1977920.26,
+        "accumulated_amount": 1977920.26,
+        "amount": 1977920.26,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 1.0,
+        "accounts": [],
+        "line_type": "calculated"
+      },
+      {
+        "key": "costo_de_ventas",
+        "line_key": "costo_de_ventas",
+        "label": "Costo de ventas",
+        "excel_row": 23,
+        "amount_column": "H",
+        "amount_cell": "H23",
+        "period_amount": 1654681.76,
+        "accumulated_amount": 1654681.76,
+        "amount": 1654681.76,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.8366,
+        "accounts": [
+          {
+            "source_row": 101,
+            "account_raw": "5110-0001   MATERIALES PARA MAQUINARIA",
+            "account_code": "5110-0001",
+            "account_name": "MATERIALES PARA MAQUINARIA",
+            "top_account": "5110",
+            "saldo_final": 252649.51
+          },
+          {
+            "source_row": 102,
+            "account_raw": "5110-0003   MATERIAL PARA CONSTRUCCION",
+            "account_code": "5110-0003",
+            "account_name": "MATERIAL PARA CONSTRUCCION",
+            "top_account": "5110",
+            "saldo_final": 214656.14
+          },
+          {
+            "source_row": 103,
+            "account_raw": "5110-0005   MATERIAL PARA EMPAQUES",
+            "account_code": "5110-0005",
+            "account_name": "MATERIAL PARA EMPAQUES",
+            "top_account": "5110",
+            "saldo_final": 15219.98
+          },
+          {
+            "source_row": 104,
+            "account_raw": "5110-0011   MATERIAL ACERO PERFILES",
+            "account_code": "5110-0011",
+            "account_name": "MATERIAL ACERO PERFILES",
+            "top_account": "5110",
+            "saldo_final": 314563.98
+          },
+          {
+            "source_row": 105,
+            "account_raw": "5110-0012   MATERIAL ACERO ESPECIAL Y MAQUINADOS",
+            "account_code": "5110-0012",
+            "account_name": "MATERIAL ACERO ESPECIAL Y MAQUINADOS",
+            "top_account": "5110",
+            "saldo_final": 320767.95
+          },
+          {
+            "source_row": 106,
+            "account_raw": "5110-0013   MATERIAL RODAMIENTOS Y SIMILARES",
+            "account_code": "5110-0013",
+            "account_name": "MATERIAL RODAMIENTOS Y SIMILARES",
+            "top_account": "5110",
+            "saldo_final": 147335.24
+          },
+          {
+            "source_row": 107,
+            "account_raw": "5110-0014   MATERIAL ESPECIALES MAQUINADO TORTILLAS",
+            "account_code": "5110-0014",
+            "account_name": "MATERIAL ESPECIALES MAQUINADO TORTILLAS",
+            "top_account": "5110",
+            "saldo_final": 174732.21
+          },
+          {
+            "source_row": 108,
+            "account_raw": "5110-0015   MATERIAL ELECTRICO",
+            "account_code": "5110-0015",
+            "account_name": "MATERIAL ELECTRICO",
+            "top_account": "5110",
+            "saldo_final": 214756.76
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "utilidad_bruta",
         "line_key": "utilidad_bruta",
         "label": "Utilidad bruta",
-        "line_type": "calculated",
+        "excel_row": 25,
         "amount_column": "H",
-        "amount_cell": null,
-        "amount": 323337.42,
-        "formula": "ventas_ingresos_netos - costo_ventas",
+        "amount_cell": "H25",
+        "period_amount": 323238.5,
+        "accumulated_amount": 323238.5,
+        "amount": 323238.5,
         "percentage_column": "J",
         "percentage_of": "H18",
-        "percentage": 0.1635
+        "percentage": 0.1634,
+        "accounts": [],
+        "line_type": "calculated"
       },
       {
-        "line_key": "gastos_operacion",
-        "label": "Gastos de operacion",
-        "line_type": "mapped",
+        "key": "sueldos_y_salarios",
+        "line_key": "sueldos_y_salarios",
+        "label": "Sueldos y salarios",
+        "excel_row": 28,
         "amount_column": "H",
-        "amount_cell": null,
-        "amount": 3076457.77,
-        "formula": null,
+        "amount_cell": "H28",
+        "period_amount": 1783936.94,
+        "accumulated_amount": 1783936.94,
+        "amount": 1783936.94,
         "percentage_column": "J",
         "percentage_of": "H18",
-        "percentage": 1.5553
+        "percentage": 0.9019,
+        "accounts": [
+          {
+            "source_row": 110,
+            "account_raw": "6110-0001   SUELDO Y SEPTIMO DIA",
+            "account_code": "6110-0001",
+            "account_name": "SUELDO Y SEPTIMO DIA",
+            "top_account": "6110",
+            "saldo_final": 1017759.31
+          },
+          {
+            "source_row": 111,
+            "account_raw": "6110-0002   BONO DE PUNTUALIDAD",
+            "account_code": "6110-0002",
+            "account_name": "BONO DE PUNTUALIDAD",
+            "top_account": "6110",
+            "saldo_final": 41877.78
+          },
+          {
+            "source_row": 112,
+            "account_raw": "6110-0003   BONO DE ASISTENCIA",
+            "account_code": "6110-0003",
+            "account_name": "BONO DE ASISTENCIA",
+            "top_account": "6110",
+            "saldo_final": 34642.46
+          },
+          {
+            "source_row": 113,
+            "account_raw": "6110-0004   BONO DE DESPENSA",
+            "account_code": "6110-0004",
+            "account_name": "BONO DE DESPENSA",
+            "top_account": "6110",
+            "saldo_final": 84680.45
+          },
+          {
+            "source_row": 114,
+            "account_raw": "6110-0005   PERCEPCION EXENTA",
+            "account_code": "6110-0005",
+            "account_name": "PERCEPCION EXENTA",
+            "top_account": "6110",
+            "saldo_final": 242.07
+          },
+          {
+            "source_row": 115,
+            "account_raw": "6110-0006   AGUINALDO",
+            "account_code": "6110-0006",
+            "account_name": "AGUINALDO",
+            "top_account": "6110",
+            "saldo_final": 18702.2
+          },
+          {
+            "source_row": 116,
+            "account_raw": "6110-0007   VACACIONES",
+            "account_code": "6110-0007",
+            "account_name": "VACACIONES",
+            "top_account": "6110",
+            "saldo_final": 45021.04
+          },
+          {
+            "source_row": 117,
+            "account_raw": "6110-0008   PRIMA VACACIONAL",
+            "account_code": "6110-0008",
+            "account_name": "PRIMA VACACIONAL",
+            "top_account": "6110",
+            "saldo_final": 11249.07
+          },
+          {
+            "source_row": 118,
+            "account_raw": "6110-0010   HORAS EXTRAS DOBLES",
+            "account_code": "6110-0010",
+            "account_name": "HORAS EXTRAS DOBLES",
+            "top_account": "6110",
+            "saldo_final": 191833.42
+          },
+          {
+            "source_row": 119,
+            "account_raw": "6110-0011   HORAS EXTRAS TRIPLES",
+            "account_code": "6110-0011",
+            "account_name": "HORAS EXTRAS TRIPLES",
+            "top_account": "6110",
+            "saldo_final": 45838.32
+          },
+          {
+            "source_row": 120,
+            "account_raw": "6110-0013   INDEMNIZACION",
+            "account_code": "6110-0013",
+            "account_name": "INDEMNIZACION",
+            "top_account": "6110",
+            "saldo_final": 25092.0
+          },
+          {
+            "source_row": 121,
+            "account_raw": "6110-0016   OTRAS PERCEPCIONES",
+            "account_code": "6110-0016",
+            "account_name": "OTRAS PERCEPCIONES",
+            "top_account": "6110",
+            "saldo_final": 208395.59
+          },
+          {
+            "source_row": 122,
+            "account_raw": "6110-0017   GRATIFICACION POR SEPARACION",
+            "account_code": "6110-0017",
+            "account_name": "GRATIFICACION POR SEPARACION",
+            "top_account": "6110",
+            "saldo_final": 58130.67
+          },
+          {
+            "source_row": 123,
+            "account_raw": "6110-0019   PRIMA DOMINICAL",
+            "account_code": "6110-0019",
+            "account_name": "PRIMA DOMINICAL",
+            "top_account": "6110",
+            "saldo_final": 472.56
+          }
+        ],
+        "line_type": "mapped"
       },
       {
-        "line_key": "resultado_operacion",
-        "label": "Resultado de operacion",
-        "line_type": "calculated",
+        "key": "impuestos_y_derechos",
+        "line_key": "impuestos_y_derechos",
+        "label": "Impuestos y derechos",
+        "excel_row": 29,
         "amount_column": "H",
-        "amount_cell": null,
-        "amount": -2753120.35,
-        "formula": "utilidad_bruta - gastos_operacion",
+        "amount_cell": "H29",
+        "period_amount": 318566.65,
+        "accumulated_amount": 318566.65,
+        "amount": 318566.65,
         "percentage_column": "J",
         "percentage_of": "H18",
-        "percentage": -1.3919
+        "percentage": 0.1611,
+        "accounts": [
+          {
+            "source_row": 125,
+            "account_raw": "6120-0001   IMSS",
+            "account_code": "6120-0001",
+            "account_name": "IMSS",
+            "top_account": "6120",
+            "saldo_final": 143760.8
+          },
+          {
+            "source_row": 126,
+            "account_raw": "6120-0002   SAR",
+            "account_code": "6120-0002",
+            "account_name": "SAR",
+            "top_account": "6120",
+            "saldo_final": 78726.41
+          },
+          {
+            "source_row": 127,
+            "account_raw": "6120-0003   INFONAVIT",
+            "account_code": "6120-0003",
+            "account_name": "INFONAVIT",
+            "top_account": "6120",
+            "saldo_final": 42623.11
+          },
+          {
+            "source_row": 128,
+            "account_raw": "6120-0004   ISN",
+            "account_code": "6120-0004",
+            "account_name": "ISN",
+            "top_account": "6120",
+            "saldo_final": 51319.0
+          },
+          {
+            "source_row": 129,
+            "account_raw": "6120-0005   OTROS",
+            "account_code": "6120-0005",
+            "account_name": "OTROS",
+            "top_account": "6120",
+            "saldo_final": 2137.33
+          }
+        ],
+        "line_type": "mapped"
       },
       {
-        "line_key": "otros_ingresos",
-        "label": "Otros ingresos",
-        "line_type": "mapped",
+        "key": "honorarios",
+        "line_key": "honorarios",
+        "label": "Honorarios",
+        "excel_row": 30,
         "amount_column": "H",
-        "amount_cell": null,
+        "amount_cell": "H30",
+        "period_amount": 39400.0,
+        "accumulated_amount": 39400.0,
+        "amount": 39400.0,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0199,
+        "accounts": [
+          {
+            "source_row": 131,
+            "account_raw": "6125-0001   HONORARIOS PF",
+            "account_code": "6125-0001",
+            "account_name": "HONORARIOS PF",
+            "top_account": "6125",
+            "saldo_final": 5400.0
+          },
+          {
+            "source_row": 132,
+            "account_raw": "6125-0002   HONORARIOS PM",
+            "account_code": "6125-0002",
+            "account_name": "HONORARIOS PM",
+            "top_account": "6125",
+            "saldo_final": 34000.0
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "arrendamiento",
+        "line_key": "arrendamiento",
+        "label": "Arrendamiento",
+        "excel_row": 31,
+        "amount_column": "H",
+        "amount_cell": "H31",
+        "period_amount": 125426.32,
+        "accumulated_amount": 125426.32,
+        "amount": 125426.32,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0634,
+        "accounts": [
+          {
+            "source_row": 134,
+            "account_raw": "6130-0001   ARRENDAMIENTO PF",
+            "account_code": "6130-0001",
+            "account_name": "ARRENDAMIENTO PF",
+            "top_account": "6130",
+            "saldo_final": 19200.0
+          },
+          {
+            "source_row": 135,
+            "account_raw": "6130-0002   ARRENDAMIENTO PM",
+            "account_code": "6130-0002",
+            "account_name": "ARRENDAMIENTO PM",
+            "top_account": "6130",
+            "saldo_final": 106226.32
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "seguros_y_fianzas",
+        "line_key": "seguros_y_fianzas",
+        "label": "Seguros y fianzas",
+        "excel_row": 32,
+        "amount_column": "H",
+        "amount_cell": "H32",
+        "period_amount": 12288.78,
+        "accumulated_amount": 12288.78,
+        "amount": 12288.78,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0062,
+        "accounts": [
+          {
+            "source_row": 136,
+            "account_raw": "6135   SEGUROS Y FIANZAS",
+            "account_code": "6135",
+            "account_name": "SEGUROS Y FIANZAS",
+            "top_account": "6135",
+            "saldo_final": 12288.78
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "servicios",
+        "line_key": "servicios",
+        "label": "Servicios",
+        "excel_row": 33,
+        "amount_column": "H",
+        "amount_cell": "H33",
+        "period_amount": 29358.7,
+        "accumulated_amount": 29358.7,
+        "amount": 29358.7,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0148,
+        "accounts": [
+          {
+            "source_row": 138,
+            "account_raw": "6140-0001   ENERGIA ELECTRICA",
+            "account_code": "6140-0001",
+            "account_name": "ENERGIA ELECTRICA",
+            "top_account": "6140",
+            "saldo_final": 9945.32
+          },
+          {
+            "source_row": 139,
+            "account_raw": "6140-0002   AGUA",
+            "account_code": "6140-0002",
+            "account_name": "AGUA",
+            "top_account": "6140",
+            "saldo_final": 8813.3
+          },
+          {
+            "source_row": 140,
+            "account_raw": "6140-0004   TELEFONO E INTERNET",
+            "account_code": "6140-0004",
+            "account_name": "TELEFONO E INTERNET",
+            "top_account": "6140",
+            "saldo_final": 10600.08
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "capacitacion_al_personal",
+        "line_key": "capacitacion_al_personal",
+        "label": "Capacitacion al personal",
+        "excel_row": 34,
+        "amount_column": "H",
+        "amount_cell": "H34",
+        "period_amount": 19480.0,
+        "accumulated_amount": 19480.0,
+        "amount": 19480.0,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0098,
+        "accounts": [
+          {
+            "source_row": 141,
+            "account_raw": "6144   CAPACITACION AL PERSONAL",
+            "account_code": "6144",
+            "account_name": "CAPACITACION AL PERSONAL",
+            "top_account": "6144",
+            "saldo_final": 19480.0
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "fletes_y_o_mensajeria",
+        "line_key": "fletes_y_o_mensajeria",
+        "label": "Fletes y/o mensajeria",
+        "excel_row": 35,
+        "amount_column": "H",
+        "amount_cell": "H35",
+        "period_amount": 141745.19,
+        "accumulated_amount": 141745.19,
+        "amount": 141745.19,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0717,
+        "accounts": [
+          {
+            "source_row": 142,
+            "account_raw": "6145   FLETES",
+            "account_code": "6145",
+            "account_name": "FLETES",
+            "top_account": "6145",
+            "saldo_final": 132585.93
+          },
+          {
+            "source_row": 143,
+            "account_raw": "6146   MENSAJERIA",
+            "account_code": "6146",
+            "account_name": "MENSAJERIA",
+            "top_account": "6146",
+            "saldo_final": 9159.26
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "seguridad_e_higiene",
+        "line_key": "seguridad_e_higiene",
+        "label": "Seguridad e higiene",
+        "excel_row": 36,
+        "amount_column": "H",
+        "amount_cell": "H36",
+        "period_amount": 0.0,
+        "accumulated_amount": 0.0,
         "amount": 0.0,
-        "formula": null,
         "percentage_column": "J",
         "percentage_of": "H18",
-        "percentage": 0.0
+        "percentage": 0.0,
+        "accounts": [],
+        "line_type": "mapped"
       },
       {
+        "key": "mantenimiento",
+        "line_key": "mantenimiento",
+        "label": "Mantenimiento",
+        "excel_row": 37,
+        "amount_column": "H",
+        "amount_cell": "H37",
+        "period_amount": 72756.35,
+        "accumulated_amount": 72756.35,
+        "amount": 72756.35,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0368,
+        "accounts": [
+          {
+            "source_row": 146,
+            "account_raw": "6150-0001   OFICINA",
+            "account_code": "6150-0001",
+            "account_name": "OFICINA",
+            "top_account": "6150",
+            "saldo_final": 71316.35
+          },
+          {
+            "source_row": 147,
+            "account_raw": "6150-0005   MANTENIMIENTO DE MAQUINARIA",
+            "account_code": "6150-0005",
+            "account_name": "MANTENIMIENTO DE MAQUINARIA",
+            "top_account": "6150",
+            "saldo_final": 1440.0
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "combustibles",
+        "line_key": "combustibles",
+        "label": "Combustibles",
+        "excel_row": 38,
+        "amount_column": "H",
+        "amount_cell": "H38",
+        "period_amount": 55597.44,
+        "accumulated_amount": 55597.44,
+        "amount": 55597.44,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0281,
+        "accounts": [
+          {
+            "source_row": 149,
+            "account_raw": "6160   COMBUSTIBLES",
+            "account_code": "6160",
+            "account_name": "COMBUSTIBLES",
+            "top_account": "6160",
+            "saldo_final": 55597.44
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "propaganda_y_publicidad",
+        "line_key": "propaganda_y_publicidad",
+        "label": "Propaganda y publicidad",
+        "excel_row": 39,
+        "amount_column": "H",
+        "amount_cell": "H39",
+        "period_amount": 2165.75,
+        "accumulated_amount": 2165.75,
+        "amount": 2165.75,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0011,
+        "accounts": [
+          {
+            "source_row": 148,
+            "account_raw": "6155   PUBLICIDAD Y PROPAGANDA",
+            "account_code": "6155",
+            "account_name": "PUBLICIDAD Y PROPAGANDA",
+            "top_account": "6155",
+            "saldo_final": 2165.75
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "cuotas_y_suscripciones",
+        "line_key": "cuotas_y_suscripciones",
+        "label": "Cuotas y suscripciones",
+        "excel_row": 40,
+        "amount_column": "H",
+        "amount_cell": "H40",
+        "period_amount": 0.0,
+        "accumulated_amount": 0.0,
+        "amount": 0.0,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0,
+        "accounts": [],
+        "line_type": "mapped"
+      },
+      {
+        "key": "gastos_de_viaje",
+        "line_key": "gastos_de_viaje",
+        "label": "Gastos de viaje",
+        "excel_row": 41,
+        "amount_column": "H",
+        "amount_cell": "H41",
+        "period_amount": 84055.23,
+        "accumulated_amount": 84055.23,
+        "amount": 84055.23,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0425,
+        "accounts": [
+          {
+            "source_row": 151,
+            "account_raw": "6175   GASTOS DE VIAJE",
+            "account_code": "6175",
+            "account_name": "GASTOS DE VIAJE",
+            "top_account": "6175",
+            "saldo_final": 84055.23
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "herrajes_y_herramientas",
+        "line_key": "herrajes_y_herramientas",
+        "label": "Herrajes y herramientas",
+        "excel_row": 42,
+        "amount_column": "H",
+        "amount_cell": "H42",
+        "period_amount": 114777.61,
+        "accumulated_amount": 114777.61,
+        "amount": 114777.61,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.058,
+        "accounts": [
+          {
+            "source_row": 153,
+            "account_raw": "6177   HERRAJES Y HERRAMIENTAS",
+            "account_code": "6177",
+            "account_name": "HERRAJES Y HERRAMIENTAS",
+            "top_account": "6177",
+            "saldo_final": 114777.61
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "papeleria_y_art_de_oficina",
+        "line_key": "papeleria_y_art_de_oficina",
+        "label": "Papeleria y art. de oficina",
+        "excel_row": 43,
+        "amount_column": "H",
+        "amount_cell": "H43",
+        "period_amount": 6328.27,
+        "accumulated_amount": 6328.27,
+        "amount": 6328.27,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0032,
+        "accounts": [
+          {
+            "source_row": 150,
+            "account_raw": "6165   PAPELERIA Y ART DE OFICINA",
+            "account_code": "6165",
+            "account_name": "PAPELERIA Y ART DE OFICINA",
+            "top_account": "6165",
+            "saldo_final": 6328.27
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "depreciaciones",
+        "line_key": "depreciaciones",
+        "label": "Depreciaciones",
+        "excel_row": 44,
+        "amount_column": "H",
+        "amount_cell": "H44",
+        "period_amount": 0.0,
+        "accumulated_amount": 0.0,
+        "amount": 0.0,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0,
+        "accounts": [],
+        "line_type": "mapped"
+      },
+      {
+        "key": "recargos",
+        "line_key": "recargos",
+        "label": "Recargos",
+        "excel_row": 45,
+        "amount_column": "H",
+        "amount_cell": "H45",
+        "period_amount": 1408.0,
+        "accumulated_amount": 1408.0,
+        "amount": 1408.0,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0007,
+        "accounts": [
+          {
+            "source_row": 154,
+            "account_raw": "6190   RECARGOS",
+            "account_code": "6190",
+            "account_name": "RECARGOS",
+            "top_account": "6190",
+            "saldo_final": 1408.0
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "varios",
+        "line_key": "varios",
+        "label": "Varios",
+        "excel_row": 46,
+        "amount_column": "H",
+        "amount_cell": "H46",
+        "period_amount": 39614.91,
+        "accumulated_amount": 39614.91,
+        "amount": 39614.91,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.02,
+        "accounts": [
+          {
+            "source_row": 144,
+            "account_raw": "6148   BOTIQUIN Y ESTUDIOS MEDICOS",
+            "account_code": "6148",
+            "account_name": "BOTIQUIN Y ESTUDIOS MEDICOS",
+            "top_account": "6148",
+            "saldo_final": 1173.3
+          },
+          {
+            "source_row": 152,
+            "account_raw": "6176   GASTOS EN EL EXTRANJERO",
+            "account_code": "6176",
+            "account_name": "GASTOS EN EL EXTRANJERO",
+            "top_account": "6176",
+            "saldo_final": 38441.61
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "uniformes",
+        "line_key": "uniformes",
+        "label": "Uniformes",
+        "excel_row": 47,
+        "amount_column": "H",
+        "amount_cell": "H47",
+        "period_amount": 0.0,
+        "accumulated_amount": 0.0,
+        "amount": 0.0,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0,
+        "accounts": [],
+        "line_type": "mapped"
+      },
+      {
+        "key": "no_deducibles",
+        "line_key": "no_deducibles",
+        "label": "No deducibles",
+        "excel_row": 50,
+        "amount_column": "H",
+        "amount_cell": "H50",
+        "period_amount": 43318.29,
+        "accumulated_amount": 43318.29,
+        "amount": 43318.29,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0219,
+        "accounts": [
+          {
+            "source_row": 156,
+            "account_raw": "6290-0001   NO DEDUCIBLES SIN COMPROBANTES",
+            "account_code": "6290-0001",
+            "account_name": "NO DEDUCIBLES SIN COMPROBANTES",
+            "top_account": "6290",
+            "saldo_final": 43318.29
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "gastos_de_operacion",
+        "line_key": "gastos_de_operacion",
+        "label": "Gastos de operacion",
+        "excel_row": 51,
+        "amount_column": "H",
+        "amount_cell": "H51",
+        "period_amount": 2890224.43,
+        "accumulated_amount": 2890224.43,
+        "amount": 2890224.43,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 1.4612,
+        "accounts": [],
+        "line_type": "calculated"
+      },
+      {
+        "key": "utilidad_perdida_operacion",
+        "line_key": "utilidad_perdida_operacion",
+        "label": "Utilidad o perdida de operacion",
+        "excel_row": 53,
+        "amount_column": "H",
+        "amount_cell": "H53",
+        "period_amount": -2566985.93,
+        "accumulated_amount": -2566985.93,
+        "amount": -2566985.93,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": -1.2978,
+        "accounts": [],
+        "line_type": "calculated"
+      },
+      {
+        "key": "otros_productos",
+        "line_key": "otros_productos",
+        "label": "Otros productos",
+        "excel_row": 56,
+        "amount_column": "H",
+        "amount_cell": "H56",
+        "period_amount": 98.92,
+        "accumulated_amount": 98.92,
+        "amount": 98.92,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0001,
+        "accounts": [
+          {
+            "source_row": 99,
+            "account_raw": "4110-9999   OTROS INGRESOS",
+            "account_code": "4110-9999",
+            "account_name": "OTROS INGRESOS",
+            "top_account": "4110",
+            "saldo_final": 98.92
+          }
+        ],
+        "line_type": "mapped"
+      },
+      {
+        "key": "otros_gastos",
         "line_key": "otros_gastos",
         "label": "Otros gastos",
-        "line_type": "mapped",
+        "excel_row": 57,
         "amount_column": "H",
-        "amount_cell": null,
+        "amount_cell": "H57",
+        "period_amount": 0.0,
+        "accumulated_amount": 0.0,
         "amount": 0.0,
-        "formula": null,
         "percentage_column": "J",
         "percentage_of": "H18",
-        "percentage": 0.0
+        "percentage": 0.0,
+        "accounts": [],
+        "line_type": "mapped"
       },
       {
+        "key": "total_otros_ingresos",
+        "line_key": "total_otros_ingresos",
+        "label": "Total otros ingresos",
+        "excel_row": 58,
+        "amount_column": "H",
+        "amount_cell": "H58",
+        "period_amount": 98.92,
+        "accumulated_amount": 98.92,
+        "amount": 98.92,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0001,
+        "accounts": [],
+        "line_type": "calculated"
+      },
+      {
+        "key": "productos_financieros",
         "line_key": "productos_financieros",
         "label": "Productos financieros",
-        "line_type": "mapped",
+        "excel_row": 61,
         "amount_column": "H",
-        "amount_cell": null,
-        "amount": 0.0,
-        "formula": null,
+        "amount_cell": "H61",
+        "period_amount": 4574.35,
+        "accumulated_amount": 4574.35,
+        "amount": 4574.35,
         "percentage_column": "J",
         "percentage_of": "H18",
-        "percentage": 0.0
+        "percentage": 0.0023,
+        "accounts": [
+          {
+            "source_row": 162,
+            "account_raw": "7510-0001   RENDIMIENTOS BANCARIOS",
+            "account_code": "7510-0001",
+            "account_name": "RENDIMIENTOS BANCARIOS",
+            "top_account": "7510",
+            "saldo_final": 3974.32
+          },
+          {
+            "source_row": 163,
+            "account_raw": "7510-0002   UTILIDAD CAMBIARIA",
+            "account_code": "7510-0002",
+            "account_name": "UTILIDAD CAMBIARIA",
+            "top_account": "7510",
+            "saldo_final": 600.03
+          }
+        ],
+        "line_type": "mapped"
       },
       {
+        "key": "gastos_financieros",
         "line_key": "gastos_financieros",
         "label": "Gastos financieros",
-        "line_type": "mapped",
+        "excel_row": 62,
         "amount_column": "H",
-        "amount_cell": null,
-        "amount": 4574.35,
-        "formula": null,
+        "amount_cell": "H62",
+        "period_amount": -229978.65,
+        "accumulated_amount": -229978.65,
+        "amount": -229978.65,
         "percentage_column": "J",
         "percentage_of": "H18",
-        "percentage": 0.0023
+        "percentage": -0.1163,
+        "accounts": [
+          {
+            "source_row": 158,
+            "account_raw": "6410-0001   COMISIONES BANCARIAS",
+            "account_code": "6410-0001",
+            "account_name": "COMISIONES BANCARIAS",
+            "top_account": "6410",
+            "saldo_final": 44249.31
+          },
+          {
+            "source_row": 159,
+            "account_raw": "6410-0002   PERDIDA CAMBIARIA",
+            "account_code": "6410-0002",
+            "account_name": "PERDIDA CAMBIARIA",
+            "top_account": "6410",
+            "saldo_final": 42675.8
+          },
+          {
+            "source_row": 160,
+            "account_raw": "6410-0003   INTERESES",
+            "account_code": "6410-0003",
+            "account_name": "INTERESES",
+            "top_account": "6410",
+            "saldo_final": 143053.54
+          }
+        ],
+        "line_type": "mapped"
       },
       {
+        "key": "resultado_integral_financiamiento",
+        "line_key": "resultado_integral_financiamiento",
+        "label": "Resultado integral de financiamiento",
+        "excel_row": 63,
+        "amount_column": "H",
+        "amount_cell": "H63",
+        "period_amount": -225404.3,
+        "accumulated_amount": -225404.3,
+        "amount": -225404.3,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": -0.114,
+        "accounts": [],
+        "line_type": "calculated"
+      },
+      {
+        "key": "resultado_antes_impuestos",
         "line_key": "resultado_antes_impuestos",
         "label": "Resultado antes de impuestos",
-        "line_type": "calculated",
+        "excel_row": 65,
         "amount_column": "H",
-        "amount_cell": null,
-        "amount": -2757694.7,
-        "formula": "resultado_operacion + otros_ingresos - otros_gastos + productos_financieros - gastos_financieros",
+        "amount_cell": "H65",
+        "period_amount": -2792291.31,
+        "accumulated_amount": -2792291.31,
+        "amount": -2792291.31,
         "percentage_column": "J",
         "percentage_of": "H18",
-        "percentage": -1.3942
+        "percentage": -1.4117,
+        "accounts": [],
+        "line_type": "calculated"
       },
       {
-        "line_key": "impuestos",
-        "label": "Impuestos a la utilidad",
-        "line_type": "mapped",
+        "key": "isr_del_ejercicio",
+        "line_key": "isr_del_ejercicio",
+        "label": "ISR del ejercicio",
+        "excel_row": 67,
         "amount_column": "H",
-        "amount_cell": null,
+        "amount_cell": "H67",
+        "period_amount": 0.0,
+        "accumulated_amount": 0.0,
         "amount": 0.0,
-        "formula": null,
         "percentage_column": "J",
         "percentage_of": "H18",
-        "percentage": 0.0
+        "percentage": 0.0,
+        "accounts": [],
+        "line_type": "mapped"
       },
       {
+        "key": "ptu_del_ejercicio",
+        "line_key": "ptu_del_ejercicio",
+        "label": "PTU del ejercicio",
+        "excel_row": 68,
+        "amount_column": "H",
+        "amount_cell": "H68",
+        "period_amount": 0.0,
+        "accumulated_amount": 0.0,
+        "amount": 0.0,
+        "percentage_column": "J",
+        "percentage_of": "H18",
+        "percentage": 0.0,
+        "accounts": [],
+        "line_type": "mapped"
+      },
+      {
+        "key": "resultado_ejercicio",
         "line_key": "resultado_ejercicio",
         "label": "Resultado del ejercicio",
-        "line_type": "calculated",
+        "excel_row": 70,
         "amount_column": "H",
-        "amount_cell": null,
-        "amount": -2757694.7,
-        "formula": "resultado_antes_impuestos - impuestos",
+        "amount_cell": "H70",
+        "period_amount": -2792291.31,
+        "accumulated_amount": -2792291.31,
+        "amount": -2792291.31,
         "percentage_column": "J",
         "percentage_of": "H18",
-        "percentage": -1.3942
+        "percentage": -1.4117,
+        "accounts": [],
+        "line_type": "calculated"
       }
     ],
     "unmatched_accounts_count": 68,
@@ -180,7 +1131,7 @@
       {
         "source_row": 8,
         "account_raw": "1110-0001   CAJA Y EFECTIVO",
-        "account_code": "11100001",
+        "account_code": "1110-0001",
         "account_name": "CAJA Y EFECTIVO",
         "top_account": "1110",
         "saldo_final": 1324.44,
@@ -189,7 +1140,7 @@
       {
         "source_row": 10,
         "account_raw": "1120-0001   BBVA BANCOMER",
-        "account_code": "11200001",
+        "account_code": "1120-0001",
         "account_name": "BBVA BANCOMER",
         "top_account": "1120",
         "saldo_final": -1331587.74,
@@ -198,7 +1149,7 @@
       {
         "source_row": 11,
         "account_raw": "1120-0002   SANTANDER",
-        "account_code": "11200002",
+        "account_code": "1120-0002",
         "account_name": "SANTANDER",
         "top_account": "1120",
         "saldo_final": 301648.18,
@@ -207,7 +1158,7 @@
       {
         "source_row": 13,
         "account_raw": "1120-0003-0001   BBVA DOLARES",
-        "account_code": "112000030001",
+        "account_code": "1120-0003-0001",
         "account_name": "BBVA DOLARES",
         "top_account": "1120",
         "saldo_final": 14.11,
@@ -216,7 +1167,7 @@
       {
         "source_row": 14,
         "account_raw": "1120-0003-0002   BBVA COMPLEMENTARIA",
-        "account_code": "112000030002",
+        "account_code": "1120-0003-0002",
         "account_name": "BBVA COMPLEMENTARIA",
         "top_account": "1120",
         "saldo_final": 230.29,
@@ -225,7 +1176,7 @@
       {
         "source_row": 15,
         "account_raw": "1120-0006   ACTINVER CONTRATO 174493893",
-        "account_code": "11200006",
+        "account_code": "1120-0006",
         "account_name": "ACTINVER CONTRATO 174493893",
         "top_account": "1120",
         "saldo_final": 0.01,
@@ -234,7 +1185,7 @@
       {
         "source_row": 16,
         "account_raw": "1120-0009   BANORTE",
-        "account_code": "11200009",
+        "account_code": "1120-0009",
         "account_name": "BANORTE",
         "top_account": "1120",
         "saldo_final": 20904.7,
@@ -243,7 +1194,7 @@
       {
         "source_row": 18,
         "account_raw": "1125-0002   ACTINVER BOLSA CONTRATO 7129911",
-        "account_code": "11250002",
+        "account_code": "1125-0002",
         "account_name": "ACTINVER BOLSA CONTRATO 7129911",
         "top_account": "1125",
         "saldo_final": 479230.97,
@@ -252,7 +1203,7 @@
       {
         "source_row": 20,
         "account_raw": "1125-0003-0001   DOLARES",
-        "account_code": "112500030001",
+        "account_code": "1125-0003-0001",
         "account_name": "DOLARES",
         "top_account": "1125",
         "saldo_final": 0.52,
@@ -261,7 +1212,7 @@
       {
         "source_row": 21,
         "account_raw": "1125-0003-0002   COMPLEMENTARIA",
-        "account_code": "112500030002",
+        "account_code": "1125-0003-0002",
         "account_name": "COMPLEMENTARIA",
         "top_account": "1125",
         "saldo_final": 8.5,
@@ -270,7 +1221,7 @@
       {
         "source_row": 22,
         "account_raw": "1125-0003-0003   VALUACION",
-        "account_code": "112500030003",
+        "account_code": "1125-0003-0003",
         "account_name": "VALUACION",
         "top_account": "1125",
         "saldo_final": -0.01,
@@ -279,7 +1230,7 @@
       {
         "source_row": 24,
         "account_raw": "1150-0001   DEUDORES DIVERSOS",
-        "account_code": "11500001",
+        "account_code": "1150-0001",
         "account_name": "DEUDORES DIVERSOS",
         "top_account": "1150",
         "saldo_final": -2110.0,
@@ -288,7 +1239,7 @@
       {
         "source_row": 25,
         "account_raw": "1150-VERA   ADRIANA VELARDE",
-        "account_code": "1150",
+        "account_code": "1150-VERA",
         "account_name": "ADRIANA VELARDE",
         "top_account": "1150",
         "saldo_final": 25000.0,
@@ -315,7 +1266,7 @@
       {
         "source_row": 29,
         "account_raw": "1190-0001   ISR PAGOS PROVISIONALES",
-        "account_code": "11900001",
+        "account_code": "1190-0001",
         "account_name": "ISR PAGOS PROVISIONALES",
         "top_account": "1190",
         "saldo_final": 88966.0,
@@ -324,7 +1275,7 @@
       {
         "source_row": 30,
         "account_raw": "1190-0002   ISR RET BANCO",
-        "account_code": "11900002",
+        "account_code": "1190-0002",
         "account_name": "ISR RET BANCO",
         "top_account": "1190",
         "saldo_final": 420.94,
@@ -333,7 +1284,7 @@
       {
         "source_row": 32,
         "account_raw": "1195-0001   IVA A FAVOR",
-        "account_code": "11950001",
+        "account_code": "1195-0001",
         "account_name": "IVA A FAVOR",
         "top_account": "1195",
         "saldo_final": 2693178.27,
@@ -342,7 +1293,7 @@
       {
         "source_row": 33,
         "account_raw": "1195-0002   ISR A FAVOR",
-        "account_code": "11950002",
+        "account_code": "1195-0002",
         "account_name": "ISR A FAVOR",
         "top_account": "1195",
         "saldo_final": 4653.0,
@@ -351,7 +1302,7 @@
       {
         "source_row": 34,
         "account_raw": "1195-0003   SUBSIDIO AL EMPLEO",
-        "account_code": "11950003",
+        "account_code": "1195-0003",
         "account_name": "SUBSIDIO AL EMPLEO",
         "top_account": "1195",
         "saldo_final": 0.14,
@@ -360,7 +1311,7 @@
       {
         "source_row": 35,
         "account_raw": "1195-0004   PAGO DE LO INDEBIDO",
-        "account_code": "11950004",
+        "account_code": "1195-0004",
         "account_name": "PAGO DE LO INDEBIDO",
         "top_account": "1195",
         "saldo_final": 3990.0,
@@ -369,7 +1320,7 @@
       {
         "source_row": 37,
         "account_raw": "1197-0001   ANTICIPO A PROVEEDORES",
-        "account_code": "11970001",
+        "account_code": "1197-0001",
         "account_name": "ANTICIPO A PROVEEDORES",
         "top_account": "1197",
         "saldo_final": 122641.89,
@@ -378,7 +1329,7 @@
       {
         "source_row": 38,
         "account_raw": "1197-0002   ANTICIPO SERV GASOLINEROS (OXXO GAS)",
-        "account_code": "11970002",
+        "account_code": "1197-0002",
         "account_name": "ANTICIPO SERV GASOLINEROS (OXXO GAS)",
         "top_account": "1197",
         "saldo_final": 152.46,
@@ -387,7 +1338,7 @@
       {
         "source_row": 40,
         "account_raw": "1210-0001   MOBILIARIO Y EQUIPO",
-        "account_code": "12100001",
+        "account_code": "1210-0001",
         "account_name": "MOBILIARIO Y EQUIPO",
         "top_account": "1210",
         "saldo_final": 44082.65,
@@ -405,7 +1356,7 @@
       {
         "source_row": 43,
         "account_raw": "1220-0001   EQUIPO DE COMPUTO",
-        "account_code": "12200001",
+        "account_code": "1220-0001",
         "account_name": "EQUIPO DE COMPUTO",
         "top_account": "1220",
         "saldo_final": 14106.03,
@@ -423,7 +1374,7 @@
       {
         "source_row": 46,
         "account_raw": "1230-0001   EQUIPO DE TRANSPORTE",
-        "account_code": "12300001",
+        "account_code": "1230-0001",
         "account_name": "EQUIPO DE TRANSPORTE",
         "top_account": "1230",
         "saldo_final": 442241.38,
@@ -432,7 +1383,7 @@
       {
         "source_row": 47,
         "account_raw": "1230-0002   REMOLQUE NVO NEGRO 2EJES MOD 2023",
-        "account_code": "12300002",
+        "account_code": "1230-0002",
         "account_name": "REMOLQUE NVO NEGRO 2EJES MOD 2023",
         "top_account": "1230",
         "saldo_final": 133620.69,
@@ -450,7 +1401,7 @@
       {
         "source_row": 50,
         "account_raw": "1240-0001   MAQUINARIA Y EQUIPO",
-        "account_code": "12400001",
+        "account_code": "1240-0001",
         "account_name": "MAQUINARIA Y EQUIPO",
         "top_account": "1240",
         "saldo_final": 19497.08,
@@ -477,7 +1428,7 @@
       {
         "source_row": 54,
         "account_raw": "2120- VERN   Nancy Angelica Velarde Rodriguez",
-        "account_code": "2120",
+        "account_code": "2120-VERN",
         "account_name": "Nancy Angelica Velarde Rodriguez",
         "top_account": "2120",
         "saldo_final": 802898.49,
@@ -486,7 +1437,7 @@
       {
         "source_row": 55,
         "account_raw": "2120-0001   ACREEDORES DIVERSOS",
-        "account_code": "21200001",
+        "account_code": "2120-0001",
         "account_name": "ACREEDORES DIVERSOS",
         "top_account": "2120",
         "saldo_final": 5478.49,
@@ -495,7 +1446,7 @@
       {
         "source_row": 57,
         "account_raw": "2120-0002-BB03   PRESTAMO BBVA BANCOMER CONT 00741735769827956518",
-        "account_code": "2120000203",
+        "account_code": "2120-0002-BB03",
         "account_name": "PRESTAMO BBVA BANCOMER CONT 00741735769827956518",
         "top_account": "2120",
         "saldo_final": 576578.11,
@@ -504,7 +1455,7 @@
       {
         "source_row": 58,
         "account_raw": "2120-0002-BBCR   PRESTAMO BBVA CREDITO REVOLVENTE",
-        "account_code": "21200002",
+        "account_code": "2120-0002-BBCR",
         "account_name": "PRESTAMO BBVA CREDITO REVOLVENTE",
         "top_account": "2120",
         "saldo_final": -24641.71,
@@ -513,7 +1464,7 @@
       {
         "source_row": 59,
         "account_raw": "2120-0002-BBV2   PRESTAMO BBVA 202204 CRED 6008",
-        "account_code": "212000022",
+        "account_code": "2120-0002-BBV2",
         "account_name": "PRESTAMO BBVA 202204 CRED 6008",
         "top_account": "2120",
         "saldo_final": 521961.67,
@@ -522,7 +1473,7 @@
       {
         "source_row": 60,
         "account_raw": "2120-0002-TMA0   PRESTAMO BBVA TU MEJOR AGENCIA NISSAN ONIX CONT 44274144",
-        "account_code": "212000020",
+        "account_code": "2120-0002-TMA0",
         "account_name": "PRESTAMO BBVA TU MEJOR AGENCIA NISSAN ONIX CONT 44274144",
         "top_account": "2120",
         "saldo_final": 115907.7,
@@ -531,7 +1482,7 @@
       {
         "source_row": 62,
         "account_raw": "2120-0RET-0001   RETENCION IVA PENDIENTE",
-        "account_code": "212000001",
+        "account_code": "2120-0RET-0001",
         "account_name": "RETENCION IVA PENDIENTE",
         "top_account": "2120",
         "saldo_final": 225.71,
@@ -540,7 +1491,7 @@
       {
         "source_row": 63,
         "account_raw": "2120-9998   OTRAS DEDUCCIONES",
-        "account_code": "21209998",
+        "account_code": "2120-9998",
         "account_name": "OTRAS DEDUCCIONES",
         "top_account": "2120",
         "saldo_final": 5581.23,
@@ -549,7 +1500,7 @@
       {
         "source_row": 64,
         "account_raw": "2120-9999   SUELDOS POR PAGAR",
-        "account_code": "21209999",
+        "account_code": "2120-9999",
         "account_name": "SUELDOS POR PAGAR",
         "top_account": "2120",
         "saldo_final": 141026.81,
@@ -558,7 +1509,7 @@
       {
         "source_row": 65,
         "account_raw": "2120-BANORTE   PRESTAMO BANORTE",
-        "account_code": "2120",
+        "account_code": "2120-BANORTE",
         "account_name": "PRESTAMO BANORTE",
         "top_account": "2120",
         "saldo_final": 900000.0,
@@ -567,7 +1518,7 @@
       {
         "source_row": 66,
         "account_raw": "2120-CAML   CAMPOS MEDINA MARIA LILIA",
-        "account_code": "2120",
+        "account_code": "2120-CAML",
         "account_name": "CAMPOS MEDINA MARIA LILIA",
         "top_account": "2120",
         "saldo_final": -80000.0,
@@ -576,7 +1527,7 @@
       {
         "source_row": 67,
         "account_raw": "2120-CLAR   TARJETAS CREDITO CLARA",
-        "account_code": "2120",
+        "account_code": "2120-CLAR",
         "account_name": "TARJETAS CREDITO CLARA",
         "top_account": "2120",
         "saldo_final": -216436.49,
@@ -585,7 +1536,7 @@
       {
         "source_row": 68,
         "account_raw": "2120-TMA0   TU MEJOR AGENCIA AUTOMOTRIZ",
-        "account_code": "21200",
+        "account_code": "2120-TMA0",
         "account_name": "TU MEJOR AGENCIA AUTOMOTRIZ",
         "top_account": "2120",
         "saldo_final": 301434.21,
@@ -594,7 +1545,7 @@
       {
         "source_row": 69,
         "account_raw": "2120-VERA   ADRIANA VELARDE",
-        "account_code": "2120",
+        "account_code": "2120-VERA",
         "account_name": "ADRIANA VELARDE",
         "top_account": "2120",
         "saldo_final": 281597.54,
@@ -603,7 +1554,7 @@
       {
         "source_row": 71,
         "account_raw": "2130-0001   ANTICIPO DE CLIENTES EXTRANJEROS",
-        "account_code": "21300001",
+        "account_code": "2130-0001",
         "account_name": "ANTICIPO DE CLIENTES EXTRANJEROS",
         "top_account": "2130",
         "saldo_final": 7883960.62,
@@ -612,7 +1563,7 @@
       {
         "source_row": 73,
         "account_raw": "2140-0001   IMPUESTOS RET DE ISR X SALARIOS",
-        "account_code": "21400001",
+        "account_code": "2140-0001",
         "account_name": "IMPUESTOS RET DE ISR X SALARIOS",
         "top_account": "2140",
         "saldo_final": 107958.73,
@@ -621,7 +1572,7 @@
       {
         "source_row": 74,
         "account_raw": "2140-0002   IMPUESTOS RET DE ISR X SERVICIOS PROF",
-        "account_code": "21400002",
+        "account_code": "2140-0002",
         "account_name": "IMPUESTOS RET DE ISR X SERVICIOS PROF",
         "top_account": "2140",
         "saldo_final": 1709.08,
@@ -630,7 +1581,7 @@
       {
         "source_row": 75,
         "account_raw": "2140-0003   IMPUESTOS RET DE ISR X ARREND",
-        "account_code": "21400003",
+        "account_code": "2140-0003",
         "account_name": "IMPUESTOS RET DE ISR X ARREND",
         "top_account": "2140",
         "saldo_final": 1400.0,
@@ -639,7 +1590,7 @@
       {
         "source_row": 76,
         "account_raw": "2140-0004   IMPUESTOS RET DE IVA",
-        "account_code": "21400004",
+        "account_code": "2140-0004",
         "account_name": "IMPUESTOS RET DE IVA",
         "top_account": "2140",
         "saldo_final": 14588.47,
@@ -648,7 +1599,7 @@
       {
         "source_row": 77,
         "account_raw": "2140-0005   RETENCION IMSS OBRERO",
-        "account_code": "21400005",
+        "account_code": "2140-0005",
         "account_name": "RETENCION IMSS OBRERO",
         "top_account": "2140",
         "saldo_final": 417.12,
@@ -657,7 +1608,7 @@
       {
         "source_row": 78,
         "account_raw": "2140-0006   CREDITO INFONAVIT",
-        "account_code": "21400006",
+        "account_code": "2140-0006",
         "account_name": "CREDITO INFONAVIT",
         "top_account": "2140",
         "saldo_final": 12192.55,
@@ -666,7 +1617,7 @@
       {
         "source_row": 79,
         "account_raw": "2140-0010   ISN POR PAGAR",
-        "account_code": "21400010",
+        "account_code": "2140-0010",
         "account_name": "ISN POR PAGAR",
         "top_account": "2140",
         "saldo_final": 43074.0,
@@ -684,7 +1635,7 @@
       {
         "source_row": 82,
         "account_raw": "3100-0001   CAPITAL FIJO",
-        "account_code": "31000001",
+        "account_code": "3100-0001",
         "account_name": "CAPITAL FIJO",
         "top_account": "3100",
         "saldo_final": 200000.0,
@@ -693,7 +1644,7 @@
       {
         "source_row": 83,
         "account_raw": "3100-0002   CAPITAL VARIABLE",
-        "account_code": "31000002",
+        "account_code": "3100-0002",
         "account_name": "CAPITAL VARIABLE",
         "top_account": "3100",
         "saldo_final": 225800.0,
@@ -711,7 +1662,7 @@
       {
         "source_row": 86,
         "account_raw": "3160-2017   RESULTADO DEL EJERCICIO 2017",
-        "account_code": "31602017",
+        "account_code": "3160-2017",
         "account_name": "RESULTADO DEL EJERCICIO 2017",
         "top_account": "3160",
         "saldo_final": 79094.13,
@@ -720,7 +1671,7 @@
       {
         "source_row": 87,
         "account_raw": "3160-2018   RESULTADO DEL EJERCICIO 2018",
-        "account_code": "31602018",
+        "account_code": "3160-2018",
         "account_name": "RESULTADO DEL EJERCICIO 2018",
         "top_account": "3160",
         "saldo_final": 21649.16,
@@ -729,7 +1680,7 @@
       {
         "source_row": 88,
         "account_raw": "3160-2019   RESULTADO DEL EJERCICIO 2019",
-        "account_code": "31602019",
+        "account_code": "3160-2019",
         "account_name": "RESULTADO DEL EJERCICIO 2019",
         "top_account": "3160",
         "saldo_final": 19435.67,
@@ -738,7 +1689,7 @@
       {
         "source_row": 89,
         "account_raw": "3160-2020   RESULTADO DEL EJERCICIO 2020",
-        "account_code": "31602020",
+        "account_code": "3160-2020",
         "account_name": "RESULTADO DEL EJERCICIO 2020",
         "top_account": "3160",
         "saldo_final": 19075.43,
@@ -747,7 +1698,7 @@
       {
         "source_row": 90,
         "account_raw": "3160-2021   RESULTADO DEL EJERCICIO 2021",
-        "account_code": "31602021",
+        "account_code": "3160-2021",
         "account_name": "RESULTADO DEL EJERCICIO 2021",
         "top_account": "3160",
         "saldo_final": 330278.22,
@@ -756,7 +1707,7 @@
       {
         "source_row": 91,
         "account_raw": "3160-2022   RESULTADO DEL EJERCICIO 2022",
-        "account_code": "31602022",
+        "account_code": "3160-2022",
         "account_name": "RESULTADO DEL EJERCICIO 2022",
         "top_account": "3160",
         "saldo_final": 2511778.84,
@@ -765,7 +1716,7 @@
       {
         "source_row": 92,
         "account_raw": "3160-2023   RESULTADO DEL EJERCICIO 2023",
-        "account_code": "31602023",
+        "account_code": "3160-2023",
         "account_name": "RESULTADO DEL EJERCICIO 2023",
         "top_account": "3160",
         "saldo_final": -153899.27,
@@ -774,7 +1725,7 @@
       {
         "source_row": 93,
         "account_raw": "3160-2024   RESULTADO DEL EJERCICIO 2024",
-        "account_code": "31602024",
+        "account_code": "3160-2024",
         "account_name": "RESULTADO DEL EJERCICIO 2024",
         "top_account": "3160",
         "saldo_final": 313909.2,
@@ -783,206 +1734,957 @@
       {
         "source_row": 94,
         "account_raw": "3160-2025   RESULTADO DEL EJERCICIO 2025",
-        "account_code": "31602025",
+        "account_code": "3160-2025",
         "account_name": "RESULTADO DEL EJERCICIO 2025",
         "top_account": "3160",
         "saldo_final": -4760521.6,
         "reason": "No matching account-code prefix in MAP_RULES."
       }
     ],
+    "warnings": [
+      {
+        "code": "cuenta_no_encontrada",
+        "line_key": "seguridad_e_higiene",
+        "label": "Seguridad e higiene",
+        "account_code": "6147",
+        "message": "No se encontro cuenta esperada para Seguridad e higiene; se devuelve cero."
+      },
+      {
+        "code": "cuenta_no_encontrada",
+        "line_key": "cuotas_y_suscripciones",
+        "label": "Cuotas y suscripciones",
+        "account_code": "6170",
+        "message": "No se encontro cuenta esperada para Cuotas y suscripciones; se devuelve cero."
+      },
+      {
+        "code": "cuenta_no_encontrada",
+        "line_key": "depreciaciones",
+        "label": "Depreciaciones",
+        "account_code": "6185",
+        "message": "No se encontro cuenta esperada para Depreciaciones; se devuelve cero."
+      },
+      {
+        "code": "cuenta_no_encontrada",
+        "line_key": "uniformes",
+        "label": "Uniformes",
+        "account_code": "6196",
+        "message": "No se encontro cuenta esperada para Uniformes; se devuelve cero."
+      },
+      {
+        "code": "cuenta_no_encontrada",
+        "line_key": "isr_del_ejercicio",
+        "label": "ISR del ejercicio",
+        "account_code": "6510-0001",
+        "message": "No se encontro cuenta esperada para ISR del ejercicio; se devuelve cero."
+      },
+      {
+        "code": "cuenta_no_encontrada",
+        "line_key": "ptu_del_ejercicio",
+        "label": "PTU del ejercicio",
+        "account_code": "6510-0002",
+        "message": "No se encontro cuenta esperada para PTU del ejercicio; se devuelve cero."
+      }
+    ],
     "formulas": {
-      "utilidad_bruta": "ventas_ingresos_netos - costo_ventas",
-      "resultado_operacion": "utilidad_bruta - gastos_operacion",
-      "resultado_antes_impuestos": "resultado_operacion + otros_ingresos - otros_gastos + productos_financieros - gastos_financieros",
-      "resultado_ejercicio": "resultado_antes_impuestos - impuestos"
+      "ingresos_netos": "ingresos_por_servicios + descuentos_o_bonificaciones",
+      "utilidad_bruta": "ingresos_netos - costo_de_ventas",
+      "gastos_de_operacion": "sum(gastos_operacion_detalle)",
+      "utilidad_perdida_operacion": "utilidad_bruta - gastos_de_operacion",
+      "total_otros_ingresos": "otros_productos + otros_gastos",
+      "resultado_integral_financiamiento": "productos_financieros + gastos_financieros",
+      "resultado_antes_impuestos": "utilidad_perdida_operacion + total_otros_ingresos + resultado_integral_financiamiento",
+      "resultado_ejercicio": "resultado_antes_impuestos - isr_del_ejercicio - ptu_del_ejercicio"
     },
     "sign_policy": {
-      "credit": "haber - debe; fallback saldo_final as reported if only balance is present",
-      "debit": "debe - haber; fallback saldo_final as reported if only balance is present"
+      "source_amount": "saldo_final acumulado de cuentas hoja",
+      "operating_expenses": "positivo como rubro",
+      "financial_expenses": "saldo_final de 6410 multiplicado por -1",
+      "results": "pueden ser negativos"
     }
   },
   "workbook": {
     "formula_cells": [
-      "ER!D20",
       "ER!H20",
-      "ER!D25",
       "ER!H25",
-      "ER!D51",
       "ER!H51",
-      "ER!D53",
       "ER!H53",
-      "ER!D58",
       "ER!H58",
-      "ER!D63",
       "ER!H63",
-      "ER!D65",
       "ER!H65",
-      "ER!D70",
       "ER!H70",
-      "ER!F18",
       "ER!J18",
-      "ER!F19",
       "ER!J19",
-      "ER!F20",
       "ER!J20",
-      "ER!F23",
       "ER!J23",
-      "ER!F25",
       "ER!J25",
-      "ER!F28",
       "ER!J28",
-      "ER!F29",
       "ER!J29",
-      "ER!F30",
       "ER!J30",
-      "ER!F31",
       "ER!J31",
-      "ER!F32",
       "ER!J32",
-      "ER!F33",
       "ER!J33",
-      "ER!F34",
       "ER!J34",
-      "ER!F35",
       "ER!J35",
-      "ER!F36",
       "ER!J36",
-      "ER!F37",
       "ER!J37",
-      "ER!F38",
       "ER!J38",
-      "ER!F39",
       "ER!J39",
-      "ER!F40",
       "ER!J40",
-      "ER!F41",
       "ER!J41",
-      "ER!F42",
       "ER!J42",
-      "ER!F43",
       "ER!J43",
-      "ER!F44",
       "ER!J44",
-      "ER!F45",
       "ER!J45",
-      "ER!F46",
       "ER!J46",
-      "ER!F47",
       "ER!J47",
-      "ER!F50",
       "ER!J50",
-      "ER!F51",
       "ER!J51",
-      "ER!F53",
       "ER!J53",
-      "ER!F56",
       "ER!J56",
-      "ER!F57",
       "ER!J57",
-      "ER!F58",
       "ER!J58",
-      "ER!F61",
       "ER!J61",
-      "ER!F62",
       "ER!J62",
-      "ER!F63",
       "ER!J63",
-      "ER!F65",
       "ER!J65",
-      "ER!F67",
       "ER!J67",
-      "ER!F68",
       "ER!J68",
-      "ER!F70",
       "ER!J70"
     ],
-    "formula_cells_count": 92,
+    "formula_cells_count": 46,
     "warnings": [],
     "missing_accounts": [
-      "11100001 CAJA Y EFECTIVO",
-      "11200001 BBVA BANCOMER",
-      "11200002 SANTANDER",
-      "112000030001 BBVA DOLARES",
-      "112000030002 BBVA COMPLEMENTARIA",
-      "11200006 ACTINVER CONTRATO 174493893",
-      "11200009 BANORTE",
-      "11250002 ACTINVER BOLSA CONTRATO 7129911",
-      "112500030001 DOLARES",
-      "112500030002 COMPLEMENTARIA",
-      "112500030003 VALUACION",
-      "11500001 DEUDORES DIVERSOS",
-      "1150 ADRIANA VELARDE",
-      "1160 IVA ACREDITABLE",
-      "1167 IVA ACREDITABLE NO PAGADO",
-      "11900001 ISR PAGOS PROVISIONALES",
-      "11900002 ISR RET BANCO",
-      "11950001 IVA A FAVOR",
-      "11950002 ISR A FAVOR",
-      "11950003 SUBSIDIO AL EMPLEO",
-      "11950004 PAGO DE LO INDEBIDO",
-      "11970001 ANTICIPO A PROVEEDORES",
-      "11970002 ANTICIPO SERV GASOLINEROS (OXXO GAS)",
-      "12100001 MOBILIARIO Y EQUIPO",
-      "1215 DEP ACUM DE MOBILIARIO Y EQUIPO",
-      "12200001 EQUIPO DE COMPUTO",
-      "1225 DEP ACUM DE EQUIPO DE COMPUTO",
-      "12300001 EQUIPO DE TRANSPORTE",
-      "12300002 REMOLQUE NVO NEGRO 2EJES MOD 2023",
-      "1235 DEP ACUM DE EQUIPO DE TRANSPORTE",
-      "12400001 MAQUINARIA Y EQUIPO",
-      "1245 DEP ACUM DE MAQUINARIA Y EQUIPO",
-      "2110 PROVEEDORES",
-      "2120 Nancy Angelica Velarde Rodriguez",
-      "21200001 ACREEDORES DIVERSOS",
-      "2120000203 PRESTAMO BBVA BANCOMER CONT 00741735769827956518",
-      "21200002 PRESTAMO BBVA CREDITO REVOLVENTE",
-      "212000022 PRESTAMO BBVA 202204 CRED 6008",
-      "212000020 PRESTAMO BBVA TU MEJOR AGENCIA NISSAN ONIX CONT 44274144",
-      "212000001 RETENCION IVA PENDIENTE",
-      "21209998 OTRAS DEDUCCIONES",
-      "21209999 SUELDOS POR PAGAR",
-      "2120 PRESTAMO BANORTE",
-      "2120 CAMPOS MEDINA MARIA LILIA",
-      "2120 TARJETAS CREDITO CLARA",
-      "21200 TU MEJOR AGENCIA AUTOMOTRIZ",
-      "2120 ADRIANA VELARDE",
-      "21300001 ANTICIPO DE CLIENTES EXTRANJEROS",
-      "21400001 IMPUESTOS RET DE ISR X SALARIOS",
-      "21400002 IMPUESTOS RET DE ISR X SERVICIOS PROF",
-      "21400003 IMPUESTOS RET DE ISR X ARREND",
-      "21400004 IMPUESTOS RET DE IVA",
-      "21400005 RETENCION IMSS OBRERO",
-      "21400006 CREDITO INFONAVIT",
-      "21400010 ISN POR PAGAR",
-      "2160 PTU POR PAGAR",
-      "31000001 CAPITAL FIJO",
-      "31000002 CAPITAL VARIABLE",
-      "3110 APORTACIONES",
-      "31602017 RESULTADO DEL EJERCICIO 2017",
-      "31602018 RESULTADO DEL EJERCICIO 2018",
-      "31602019 RESULTADO DEL EJERCICIO 2019",
-      "31602020 RESULTADO DEL EJERCICIO 2020",
-      "31602021 RESULTADO DEL EJERCICIO 2021",
-      "31602022 RESULTADO DEL EJERCICIO 2022",
-      "31602023 RESULTADO DEL EJERCICIO 2023",
-      "31602024 RESULTADO DEL EJERCICIO 2024",
-      "31602025 RESULTADO DEL EJERCICIO 2025"
+      "6147",
+      "6170",
+      "6185",
+      "6196",
+      "6510-0001",
+      "6510-0002"
+    ]
+  },
+  "balance_validation": {
+    "total_activo": 2654692.85,
+    "total_pasivo": 11900467.83,
+    "capital_contable": -9245774.92,
+    "difference_cuadre": -0.059663,
+    "tolerance": 1.0,
+    "cuadra": true,
+    "balanza_no_cuadra": false,
+    "componentes": [
+      {
+        "rubro": "activo",
+        "total": 2654692.85,
+        "cuentas": [
+          {
+            "source_row": 8,
+            "account_code": "1110-0001",
+            "account_name": "CAJA Y EFECTIVO",
+            "saldo_final": 1324.44
+          },
+          {
+            "source_row": 10,
+            "account_code": "1120-0001",
+            "account_name": "BBVA BANCOMER",
+            "saldo_final": -1331587.74
+          },
+          {
+            "source_row": 11,
+            "account_code": "1120-0002",
+            "account_name": "SANTANDER",
+            "saldo_final": 301648.18
+          },
+          {
+            "source_row": 13,
+            "account_code": "1120-0003-0001",
+            "account_name": "BBVA DOLARES",
+            "saldo_final": 14.11
+          },
+          {
+            "source_row": 14,
+            "account_code": "1120-0003-0002",
+            "account_name": "BBVA COMPLEMENTARIA",
+            "saldo_final": 230.29
+          },
+          {
+            "source_row": 15,
+            "account_code": "1120-0006",
+            "account_name": "ACTINVER CONTRATO 174493893",
+            "saldo_final": 0.01
+          },
+          {
+            "source_row": 16,
+            "account_code": "1120-0009",
+            "account_name": "BANORTE",
+            "saldo_final": 20904.7
+          },
+          {
+            "source_row": 18,
+            "account_code": "1125-0002",
+            "account_name": "ACTINVER BOLSA CONTRATO 7129911",
+            "saldo_final": 479230.97
+          },
+          {
+            "source_row": 20,
+            "account_code": "1125-0003-0001",
+            "account_name": "DOLARES",
+            "saldo_final": 0.52
+          },
+          {
+            "source_row": 21,
+            "account_code": "1125-0003-0002",
+            "account_name": "COMPLEMENTARIA",
+            "saldo_final": 8.5
+          },
+          {
+            "source_row": 22,
+            "account_code": "1125-0003-0003",
+            "account_name": "VALUACION",
+            "saldo_final": -0.01
+          },
+          {
+            "source_row": 24,
+            "account_code": "1150-0001",
+            "account_name": "DEUDORES DIVERSOS",
+            "saldo_final": -2110.0
+          },
+          {
+            "source_row": 25,
+            "account_code": "1150-VERA",
+            "account_name": "ADRIANA VELARDE",
+            "saldo_final": 25000.0
+          },
+          {
+            "source_row": 26,
+            "account_code": "1160",
+            "account_name": "IVA ACREDITABLE",
+            "saldo_final": 24122.86
+          },
+          {
+            "source_row": 27,
+            "account_code": "1167",
+            "account_name": "IVA ACREDITABLE NO PAGADO",
+            "saldo_final": 110107.78
+          },
+          {
+            "source_row": 29,
+            "account_code": "1190-0001",
+            "account_name": "ISR PAGOS PROVISIONALES",
+            "saldo_final": 88966.0
+          },
+          {
+            "source_row": 30,
+            "account_code": "1190-0002",
+            "account_name": "ISR RET BANCO",
+            "saldo_final": 420.94
+          },
+          {
+            "source_row": 32,
+            "account_code": "1195-0001",
+            "account_name": "IVA A FAVOR",
+            "saldo_final": 2693178.27
+          },
+          {
+            "source_row": 33,
+            "account_code": "1195-0002",
+            "account_name": "ISR A FAVOR",
+            "saldo_final": 4653.0
+          },
+          {
+            "source_row": 34,
+            "account_code": "1195-0003",
+            "account_name": "SUBSIDIO AL EMPLEO",
+            "saldo_final": 0.14
+          },
+          {
+            "source_row": 35,
+            "account_code": "1195-0004",
+            "account_name": "PAGO DE LO INDEBIDO",
+            "saldo_final": 3990.0
+          },
+          {
+            "source_row": 37,
+            "account_code": "1197-0001",
+            "account_name": "ANTICIPO A PROVEEDORES",
+            "saldo_final": 122641.89
+          },
+          {
+            "source_row": 38,
+            "account_code": "1197-0002",
+            "account_name": "ANTICIPO SERV GASOLINEROS (OXXO GAS)",
+            "saldo_final": 152.46
+          },
+          {
+            "source_row": 40,
+            "account_code": "1210-0001",
+            "account_name": "MOBILIARIO Y EQUIPO",
+            "saldo_final": 44082.65
+          },
+          {
+            "source_row": 41,
+            "account_code": "1215",
+            "account_name": "DEP ACUM DE MOBILIARIO Y EQUIPO",
+            "saldo_final": -26198.48
+          },
+          {
+            "source_row": 43,
+            "account_code": "1220-0001",
+            "account_name": "EQUIPO DE COMPUTO",
+            "saldo_final": 14106.03
+          },
+          {
+            "source_row": 44,
+            "account_code": "1225",
+            "account_name": "DEP ACUM DE EQUIPO DE COMPUTO",
+            "saldo_final": -14106.03
+          },
+          {
+            "source_row": 46,
+            "account_code": "1230-0001",
+            "account_name": "EQUIPO DE TRANSPORTE",
+            "saldo_final": 442241.38
+          },
+          {
+            "source_row": 47,
+            "account_code": "1230-0002",
+            "account_name": "REMOLQUE NVO NEGRO 2EJES MOD 2023",
+            "saldo_final": 133620.69
+          },
+          {
+            "source_row": 48,
+            "account_code": "1235",
+            "account_name": "DEP ACUM DE EQUIPO DE TRANSPORTE",
+            "saldo_final": -492349.13
+          },
+          {
+            "source_row": 50,
+            "account_code": "1240-0001",
+            "account_name": "MAQUINARIA Y EQUIPO",
+            "saldo_final": 19497.08
+          },
+          {
+            "source_row": 51,
+            "account_code": "1245",
+            "account_name": "DEP ACUM DE MAQUINARIA Y EQUIPO",
+            "saldo_final": -9098.64
+          }
+        ]
+      },
+      {
+        "rubro": "pasivo",
+        "total": 11900467.83,
+        "cuentas": [
+          {
+            "source_row": 52,
+            "account_code": "2110",
+            "account_name": "PROVEEDORES",
+            "saldo_final": 501280.31
+          },
+          {
+            "source_row": 54,
+            "account_code": "2120-VERN",
+            "account_name": "Nancy Angelica Velarde Rodriguez",
+            "saldo_final": 802898.49
+          },
+          {
+            "source_row": 55,
+            "account_code": "2120-0001",
+            "account_name": "ACREEDORES DIVERSOS",
+            "saldo_final": 5478.49
+          },
+          {
+            "source_row": 57,
+            "account_code": "2120-0002-BB03",
+            "account_name": "PRESTAMO BBVA BANCOMER CONT 00741735769827956518",
+            "saldo_final": 576578.11
+          },
+          {
+            "source_row": 58,
+            "account_code": "2120-0002-BBCR",
+            "account_name": "PRESTAMO BBVA CREDITO REVOLVENTE",
+            "saldo_final": -24641.71
+          },
+          {
+            "source_row": 59,
+            "account_code": "2120-0002-BBV2",
+            "account_name": "PRESTAMO BBVA 202204 CRED 6008",
+            "saldo_final": 521961.67
+          },
+          {
+            "source_row": 60,
+            "account_code": "2120-0002-TMA0",
+            "account_name": "PRESTAMO BBVA TU MEJOR AGENCIA NISSAN ONIX CONT 44274144",
+            "saldo_final": 115907.7
+          },
+          {
+            "source_row": 62,
+            "account_code": "2120-0RET-0001",
+            "account_name": "RETENCION IVA PENDIENTE",
+            "saldo_final": 225.71
+          },
+          {
+            "source_row": 63,
+            "account_code": "2120-9998",
+            "account_name": "OTRAS DEDUCCIONES",
+            "saldo_final": 5581.23
+          },
+          {
+            "source_row": 64,
+            "account_code": "2120-9999",
+            "account_name": "SUELDOS POR PAGAR",
+            "saldo_final": 141026.81
+          },
+          {
+            "source_row": 65,
+            "account_code": "2120-BANORTE",
+            "account_name": "PRESTAMO BANORTE",
+            "saldo_final": 900000.0
+          },
+          {
+            "source_row": 66,
+            "account_code": "2120-CAML",
+            "account_name": "CAMPOS MEDINA MARIA LILIA",
+            "saldo_final": -80000.0
+          },
+          {
+            "source_row": 67,
+            "account_code": "2120-CLAR",
+            "account_name": "TARJETAS CREDITO CLARA",
+            "saldo_final": -216436.49
+          },
+          {
+            "source_row": 68,
+            "account_code": "2120-TMA0",
+            "account_name": "TU MEJOR AGENCIA AUTOMOTRIZ",
+            "saldo_final": 301434.21
+          },
+          {
+            "source_row": 69,
+            "account_code": "2120-VERA",
+            "account_name": "ADRIANA VELARDE",
+            "saldo_final": 281597.54
+          },
+          {
+            "source_row": 71,
+            "account_code": "2130-0001",
+            "account_name": "ANTICIPO DE CLIENTES EXTRANJEROS",
+            "saldo_final": 7883960.62
+          },
+          {
+            "source_row": 73,
+            "account_code": "2140-0001",
+            "account_name": "IMPUESTOS RET DE ISR X SALARIOS",
+            "saldo_final": 107958.73
+          },
+          {
+            "source_row": 74,
+            "account_code": "2140-0002",
+            "account_name": "IMPUESTOS RET DE ISR X SERVICIOS PROF",
+            "saldo_final": 1709.08
+          },
+          {
+            "source_row": 75,
+            "account_code": "2140-0003",
+            "account_name": "IMPUESTOS RET DE ISR X ARREND",
+            "saldo_final": 1400.0
+          },
+          {
+            "source_row": 76,
+            "account_code": "2140-0004",
+            "account_name": "IMPUESTOS RET DE IVA",
+            "saldo_final": 14588.47
+          },
+          {
+            "source_row": 77,
+            "account_code": "2140-0005",
+            "account_name": "RETENCION IMSS OBRERO",
+            "saldo_final": 417.12
+          },
+          {
+            "source_row": 78,
+            "account_code": "2140-0006",
+            "account_name": "CREDITO INFONAVIT",
+            "saldo_final": 12192.55
+          },
+          {
+            "source_row": 79,
+            "account_code": "2140-0010",
+            "account_name": "ISN POR PAGAR",
+            "saldo_final": 43074.0
+          },
+          {
+            "source_row": 80,
+            "account_code": "2160",
+            "account_name": "PTU POR PAGAR",
+            "saldo_final": 2275.19
+          }
+        ]
+      },
+      {
+        "rubro": "capital_contable",
+        "total": -9245774.92,
+        "cuentas": [
+          {
+            "source_row": 81,
+            "account_code": "3100",
+            "account_name": "CAPITAL SOCIAL",
+            "saldo_final": 425800.0
+          },
+          {
+            "source_row": 84,
+            "account_code": "3110",
+            "account_name": "APORTACIONES",
+            "saldo_final": 1090000.0
+          },
+          {
+            "source_row": 85,
+            "account_code": "3160",
+            "account_name": "RESULTADO DE EJERCICIOS ANTERIORES",
+            "saldo_final": -7969283.6
+          },
+          {
+            "source_row": null,
+            "account_code": "resultado_ejercicio",
+            "account_name": "Resultado del ejercicio generado por ER",
+            "saldo_final": -2792291.31
+          }
+        ]
+      }
     ]
   },
   "validation": {
     "ok": true,
-    "formula_error_count": 0,
-    "formula_issues": [],
-    "balance_difference": 0.0,
+    "formula_static_validation": true,
+    "formula_static_issues": [],
+    "formula_recalculation_performed": false,
+    "formula_recalculation_engine": "none",
+    "formula_evaluated_error_count": null,
+    "formula_cached_values_available": false,
+    "formula_evaluated_issues": [],
+    "balance_difference": -0.059663,
     "balance_ok": true,
     "balance_reference": "BG!L47",
-    "warnings": []
+    "warnings": [
+      "Formula recalculation was not performed: libreoffice/soffice is unavailable."
+    ]
   },
+  "runtime": {
+    "service_version": "estados-financieros-api-2026-07-13",
+    "git_commit": "0dffc04ce4da7ed32bd8bec2653960dd5a2d159a",
+    "worktree_dirty": true,
+    "process_started_at": "2026-07-13T18:33:31.215081+00:00",
+    "generator_profile": "manual-er-parity",
+    "generator_profile_version": "2026-07-13.manual-er-v1",
+    "generated_at": "2026-07-13T18:33:31.416650+00:00",
+    "output_sha256": "bfb3fe3db27d28a3cd060fabeb2433a6fec2c55da4bec5f0b93d9de4170e2ddd",
+    "formula_static_validation": true,
+    "formula_recalculation_performed": false,
+    "formula_recalculation_engine": "none",
+    "formula_validation_mode": "static_only",
+    "formula_evaluated_error_count": null,
+    "formula_cached_values_available": false
+  },
+  "service_version": "estados-financieros-api-2026-07-13",
+  "git_commit": "0dffc04ce4da7ed32bd8bec2653960dd5a2d159a",
+  "worktree_dirty": true,
+  "process_started_at": "2026-07-13T18:33:31.215081+00:00",
+  "generator_profile": "manual-er-parity",
+  "generator_profile_version": "2026-07-13.manual-er-v1",
+  "output_sha256": "bfb3fe3db27d28a3cd060fabeb2433a6fec2c55da4bec5f0b93d9de4170e2ddd",
+  "formula_static_validation": true,
+  "formula_recalculation_performed": false,
+  "formula_recalculation_engine": "none",
+  "formula_validation_mode": "static_only",
+  "formula_evaluated_error_count": null,
+  "formula_cached_values_available": false,
   "balance_check": {
-    "method": "leaf_account_debe_minus_haber",
-    "difference": 0.0,
+    "method": "programmatic_balance_sheet",
+    "difference_cuadre": -0.059663,
     "tolerance": 1.0,
-    "reference": "BG!L47"
+    "cuadra": true,
+    "balanza_no_cuadra": false,
+    "total_activo": 2654692.85,
+    "total_pasivo": 11900467.83,
+    "capital_contable": -9245774.92,
+    "componentes": [
+      {
+        "rubro": "activo",
+        "total": 2654692.85,
+        "cuentas": [
+          {
+            "source_row": 8,
+            "account_code": "1110-0001",
+            "account_name": "CAJA Y EFECTIVO",
+            "saldo_final": 1324.44
+          },
+          {
+            "source_row": 10,
+            "account_code": "1120-0001",
+            "account_name": "BBVA BANCOMER",
+            "saldo_final": -1331587.74
+          },
+          {
+            "source_row": 11,
+            "account_code": "1120-0002",
+            "account_name": "SANTANDER",
+            "saldo_final": 301648.18
+          },
+          {
+            "source_row": 13,
+            "account_code": "1120-0003-0001",
+            "account_name": "BBVA DOLARES",
+            "saldo_final": 14.11
+          },
+          {
+            "source_row": 14,
+            "account_code": "1120-0003-0002",
+            "account_name": "BBVA COMPLEMENTARIA",
+            "saldo_final": 230.29
+          },
+          {
+            "source_row": 15,
+            "account_code": "1120-0006",
+            "account_name": "ACTINVER CONTRATO 174493893",
+            "saldo_final": 0.01
+          },
+          {
+            "source_row": 16,
+            "account_code": "1120-0009",
+            "account_name": "BANORTE",
+            "saldo_final": 20904.7
+          },
+          {
+            "source_row": 18,
+            "account_code": "1125-0002",
+            "account_name": "ACTINVER BOLSA CONTRATO 7129911",
+            "saldo_final": 479230.97
+          },
+          {
+            "source_row": 20,
+            "account_code": "1125-0003-0001",
+            "account_name": "DOLARES",
+            "saldo_final": 0.52
+          },
+          {
+            "source_row": 21,
+            "account_code": "1125-0003-0002",
+            "account_name": "COMPLEMENTARIA",
+            "saldo_final": 8.5
+          },
+          {
+            "source_row": 22,
+            "account_code": "1125-0003-0003",
+            "account_name": "VALUACION",
+            "saldo_final": -0.01
+          },
+          {
+            "source_row": 24,
+            "account_code": "1150-0001",
+            "account_name": "DEUDORES DIVERSOS",
+            "saldo_final": -2110.0
+          },
+          {
+            "source_row": 25,
+            "account_code": "1150-VERA",
+            "account_name": "ADRIANA VELARDE",
+            "saldo_final": 25000.0
+          },
+          {
+            "source_row": 26,
+            "account_code": "1160",
+            "account_name": "IVA ACREDITABLE",
+            "saldo_final": 24122.86
+          },
+          {
+            "source_row": 27,
+            "account_code": "1167",
+            "account_name": "IVA ACREDITABLE NO PAGADO",
+            "saldo_final": 110107.78
+          },
+          {
+            "source_row": 29,
+            "account_code": "1190-0001",
+            "account_name": "ISR PAGOS PROVISIONALES",
+            "saldo_final": 88966.0
+          },
+          {
+            "source_row": 30,
+            "account_code": "1190-0002",
+            "account_name": "ISR RET BANCO",
+            "saldo_final": 420.94
+          },
+          {
+            "source_row": 32,
+            "account_code": "1195-0001",
+            "account_name": "IVA A FAVOR",
+            "saldo_final": 2693178.27
+          },
+          {
+            "source_row": 33,
+            "account_code": "1195-0002",
+            "account_name": "ISR A FAVOR",
+            "saldo_final": 4653.0
+          },
+          {
+            "source_row": 34,
+            "account_code": "1195-0003",
+            "account_name": "SUBSIDIO AL EMPLEO",
+            "saldo_final": 0.14
+          },
+          {
+            "source_row": 35,
+            "account_code": "1195-0004",
+            "account_name": "PAGO DE LO INDEBIDO",
+            "saldo_final": 3990.0
+          },
+          {
+            "source_row": 37,
+            "account_code": "1197-0001",
+            "account_name": "ANTICIPO A PROVEEDORES",
+            "saldo_final": 122641.89
+          },
+          {
+            "source_row": 38,
+            "account_code": "1197-0002",
+            "account_name": "ANTICIPO SERV GASOLINEROS (OXXO GAS)",
+            "saldo_final": 152.46
+          },
+          {
+            "source_row": 40,
+            "account_code": "1210-0001",
+            "account_name": "MOBILIARIO Y EQUIPO",
+            "saldo_final": 44082.65
+          },
+          {
+            "source_row": 41,
+            "account_code": "1215",
+            "account_name": "DEP ACUM DE MOBILIARIO Y EQUIPO",
+            "saldo_final": -26198.48
+          },
+          {
+            "source_row": 43,
+            "account_code": "1220-0001",
+            "account_name": "EQUIPO DE COMPUTO",
+            "saldo_final": 14106.03
+          },
+          {
+            "source_row": 44,
+            "account_code": "1225",
+            "account_name": "DEP ACUM DE EQUIPO DE COMPUTO",
+            "saldo_final": -14106.03
+          },
+          {
+            "source_row": 46,
+            "account_code": "1230-0001",
+            "account_name": "EQUIPO DE TRANSPORTE",
+            "saldo_final": 442241.38
+          },
+          {
+            "source_row": 47,
+            "account_code": "1230-0002",
+            "account_name": "REMOLQUE NVO NEGRO 2EJES MOD 2023",
+            "saldo_final": 133620.69
+          },
+          {
+            "source_row": 48,
+            "account_code": "1235",
+            "account_name": "DEP ACUM DE EQUIPO DE TRANSPORTE",
+            "saldo_final": -492349.13
+          },
+          {
+            "source_row": 50,
+            "account_code": "1240-0001",
+            "account_name": "MAQUINARIA Y EQUIPO",
+            "saldo_final": 19497.08
+          },
+          {
+            "source_row": 51,
+            "account_code": "1245",
+            "account_name": "DEP ACUM DE MAQUINARIA Y EQUIPO",
+            "saldo_final": -9098.64
+          }
+        ]
+      },
+      {
+        "rubro": "pasivo",
+        "total": 11900467.83,
+        "cuentas": [
+          {
+            "source_row": 52,
+            "account_code": "2110",
+            "account_name": "PROVEEDORES",
+            "saldo_final": 501280.31
+          },
+          {
+            "source_row": 54,
+            "account_code": "2120-VERN",
+            "account_name": "Nancy Angelica Velarde Rodriguez",
+            "saldo_final": 802898.49
+          },
+          {
+            "source_row": 55,
+            "account_code": "2120-0001",
+            "account_name": "ACREEDORES DIVERSOS",
+            "saldo_final": 5478.49
+          },
+          {
+            "source_row": 57,
+            "account_code": "2120-0002-BB03",
+            "account_name": "PRESTAMO BBVA BANCOMER CONT 00741735769827956518",
+            "saldo_final": 576578.11
+          },
+          {
+            "source_row": 58,
+            "account_code": "2120-0002-BBCR",
+            "account_name": "PRESTAMO BBVA CREDITO REVOLVENTE",
+            "saldo_final": -24641.71
+          },
+          {
+            "source_row": 59,
+            "account_code": "2120-0002-BBV2",
+            "account_name": "PRESTAMO BBVA 202204 CRED 6008",
+            "saldo_final": 521961.67
+          },
+          {
+            "source_row": 60,
+            "account_code": "2120-0002-TMA0",
+            "account_name": "PRESTAMO BBVA TU MEJOR AGENCIA NISSAN ONIX CONT 44274144",
+            "saldo_final": 115907.7
+          },
+          {
+            "source_row": 62,
+            "account_code": "2120-0RET-0001",
+            "account_name": "RETENCION IVA PENDIENTE",
+            "saldo_final": 225.71
+          },
+          {
+            "source_row": 63,
+            "account_code": "2120-9998",
+            "account_name": "OTRAS DEDUCCIONES",
+            "saldo_final": 5581.23
+          },
+          {
+            "source_row": 64,
+            "account_code": "2120-9999",
+            "account_name": "SUELDOS POR PAGAR",
+            "saldo_final": 141026.81
+          },
+          {
+            "source_row": 65,
+            "account_code": "2120-BANORTE",
+            "account_name": "PRESTAMO BANORTE",
+            "saldo_final": 900000.0
+          },
+          {
+            "source_row": 66,
+            "account_code": "2120-CAML",
+            "account_name": "CAMPOS MEDINA MARIA LILIA",
+            "saldo_final": -80000.0
+          },
+          {
+            "source_row": 67,
+            "account_code": "2120-CLAR",
+            "account_name": "TARJETAS CREDITO CLARA",
+            "saldo_final": -216436.49
+          },
+          {
+            "source_row": 68,
+            "account_code": "2120-TMA0",
+            "account_name": "TU MEJOR AGENCIA AUTOMOTRIZ",
+            "saldo_final": 301434.21
+          },
+          {
+            "source_row": 69,
+            "account_code": "2120-VERA",
+            "account_name": "ADRIANA VELARDE",
+            "saldo_final": 281597.54
+          },
+          {
+            "source_row": 71,
+            "account_code": "2130-0001",
+            "account_name": "ANTICIPO DE CLIENTES EXTRANJEROS",
+            "saldo_final": 7883960.62
+          },
+          {
+            "source_row": 73,
+            "account_code": "2140-0001",
+            "account_name": "IMPUESTOS RET DE ISR X SALARIOS",
+            "saldo_final": 107958.73
+          },
+          {
+            "source_row": 74,
+            "account_code": "2140-0002",
+            "account_name": "IMPUESTOS RET DE ISR X SERVICIOS PROF",
+            "saldo_final": 1709.08
+          },
+          {
+            "source_row": 75,
+            "account_code": "2140-0003",
+            "account_name": "IMPUESTOS RET DE ISR X ARREND",
+            "saldo_final": 1400.0
+          },
+          {
+            "source_row": 76,
+            "account_code": "2140-0004",
+            "account_name": "IMPUESTOS RET DE IVA",
+            "saldo_final": 14588.47
+          },
+          {
+            "source_row": 77,
+            "account_code": "2140-0005",
+            "account_name": "RETENCION IMSS OBRERO",
+            "saldo_final": 417.12
+          },
+          {
+            "source_row": 78,
+            "account_code": "2140-0006",
+            "account_name": "CREDITO INFONAVIT",
+            "saldo_final": 12192.55
+          },
+          {
+            "source_row": 79,
+            "account_code": "2140-0010",
+            "account_name": "ISN POR PAGAR",
+            "saldo_final": 43074.0
+          },
+          {
+            "source_row": 80,
+            "account_code": "2160",
+            "account_name": "PTU POR PAGAR",
+            "saldo_final": 2275.19
+          }
+        ]
+      },
+      {
+        "rubro": "capital_contable",
+        "total": -9245774.92,
+        "cuentas": [
+          {
+            "source_row": 81,
+            "account_code": "3100",
+            "account_name": "CAPITAL SOCIAL",
+            "saldo_final": 425800.0
+          },
+          {
+            "source_row": 84,
+            "account_code": "3110",
+            "account_name": "APORTACIONES",
+            "saldo_final": 1090000.0
+          },
+          {
+            "source_row": 85,
+            "account_code": "3160",
+            "account_name": "RESULTADO DE EJERCICIOS ANTERIORES",
+            "saldo_final": -7969283.6
+          },
+          {
+            "source_row": null,
+            "account_code": "resultado_ejercicio",
+            "account_name": "Resultado del ejercicio generado por ER",
+            "saldo_final": -2792291.31
+          }
+        ]
+      }
+    ]
   },
   "notes": [
     "El mapeo contable es provisional por prefijos hasta contar con catalogo definitivo.",
