@@ -13,6 +13,11 @@ from openpyxl import load_workbook
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "sample-inputs" / "EEFF_202602_AL_Serv_Prueba.xlsx"
 TARGET = ROOT / "src" / "er_style_spec.json"
+TARGETS = {
+    "ER": ROOT / "src" / "er_style_spec.json",
+    "BG": ROOT / "src" / "bg_style_spec.json",
+    "BAL": ROOT / "src" / "bal_style_spec.json",
+}
 
 
 def _color(value: Any) -> dict[str, Any] | None:
@@ -90,15 +95,22 @@ def _style(cell: Any) -> dict[str, Any]:
     }
 
 
-def extract() -> dict[str, Any]:
+def extract(sheet: str = "ER") -> dict[str, Any]:
+    """Offline extractor only; generated specs are the runtime dependency."""
     workbook = load_workbook(SOURCE, data_only=False, keep_links=True)
-    worksheet = workbook["ER"]
+    worksheet = workbook[sheet]
     styles: list[dict[str, Any]] = []
     style_ids: dict[str, int] = {}
     cells: dict[str, int] = {}
 
-    for row in range(9, 71):
-        for column in range(2, 11):
+    bounds = {
+        "ER": (9, 70, 2, 10),
+        "BG": (7, 47, 2, 12),
+        "BAL": (1, 185, 3, 7),
+    }[sheet]
+    first_row, last_row, first_column, last_column = bounds
+    for row in range(first_row, last_row + 1):
+        for column in range(first_column, last_column + 1):
             cell = worksheet.cell(row=row, column=column)
             style = _style(cell)
             key = json.dumps(style, sort_keys=True, ensure_ascii=False)
@@ -117,11 +129,11 @@ def extract() -> dict[str, Any]:
     ]
 
     return {
-        "version": "2026-07-13.manual-er-v1",
+        "version": f"2026-07-16.{sheet.lower()}-v1" if sheet != "ER" else "2026-07-13.manual-er-v1",
         "source": SOURCE.name,
         "source_sha256": hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
-        "sheet": "ER",
-        "visible_range": "B9:J70",
+        "sheet": sheet,
+        "visible_range": f"{worksheet.cell(first_row, first_column).coordinate}:{worksheet.cell(last_row, last_column).coordinate}",
         "geometry": {
             "default_row_height": worksheet.sheet_format.defaultRowHeight,
             "default_column_width": worksheet.sheet_format.defaultColWidth,
@@ -152,8 +164,9 @@ def extract() -> dict[str, Any]:
 
 
 if __name__ == "__main__":
-    TARGET.write_text(
-        json.dumps(extract(), indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
-    print(TARGET)
+    for sheet, target in TARGETS.items():
+        target.write_text(
+            json.dumps(extract(sheet), indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        print(target)

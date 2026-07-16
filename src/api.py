@@ -61,6 +61,7 @@ def build_process_payload(report: dict[str, Any]) -> dict[str, Any]:
         "formula_cached_values_available": report["validation"]["formula_cached_values_available"],
         "validation_ok": report["validation"]["ok"],
         "output_filename": Path(report["output_xlsx"]).name,
+        "sheet_names": report["workbook"]["sheet_names"],
         "output_xlsx_base64": FinancialStatementsAPI._read_file_base64_static(report["output_xlsx"]),
         "warnings": report["validation"]["warnings"],
         **runtime,
@@ -90,14 +91,17 @@ class FinancialStatementsAPI(BaseHTTPRequestHandler):
 
         try:
             input_path, cleanup_path = self._resolve_input_path()
+            output_dir = Path(tempfile.mkdtemp(prefix="estados_financieros_output_"))
             try:
-                report = run_prototype(input_path)
+                report = run_prototype(input_path, output_dir=output_dir)
+                payload = build_process_payload(report)
             finally:
                 if cleanup_path is not None:
                     if cleanup_path.is_dir():
                         shutil.rmtree(cleanup_path, ignore_errors=True)
                     else:
                         cleanup_path.unlink(missing_ok=True)
+                shutil.rmtree(output_dir, ignore_errors=True)
         except Exception as exc:  # pragma: no cover - surfaced to caller.
             self._send_json(
                 HTTPStatus.BAD_REQUEST,
@@ -109,7 +113,6 @@ class FinancialStatementsAPI(BaseHTTPRequestHandler):
             )
             return
 
-        payload = build_process_payload(report)
         self._send_json(HTTPStatus.OK, payload)
 
     def do_HEAD(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler contract.

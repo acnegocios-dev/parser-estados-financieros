@@ -264,6 +264,213 @@ ER_EXPENSE_DETAIL_KEYS = (
 )
 
 
+BG_LINE_DEFINITIONS: Tuple[Dict[str, Any], ...] = (
+    {"key": "caja_chica", "label": "Caja Chica", "section": "activo", "codes": ("1110",)},
+    {"key": "bancos", "label": "Bancos", "section": "activo", "codes": ("1120",)},
+    {"key": "inversiones_y_valores", "label": "Inversiones y Valores", "section": "activo", "codes": ("1125",)},
+    {"key": "cuentas_por_cobrar", "label": "Cuentas por Cobrar", "section": "activo", "codes": ("1130",)},
+    {"key": "contribuciones", "label": "Contribuciones", "section": "activo", "codes": ("1160", "1167", "1190", "1195")},
+    {"key": "inventarios", "label": "Inventarios", "section": "activo", "codes": ("1170",)},
+    {"key": "deudores_diversos", "label": "Deudores Diversos", "section": "activo", "codes": ("1150",)},
+    {"key": "anticipo_a_proveedores", "label": "Anticipo a Proveedores", "section": "activo", "codes": ("1197",)},
+    {"key": "pagos_anticipados", "label": "Pagos anticipados", "section": "activo", "codes": ("1196",)},
+    {"key": "mobiliario_y_equipo", "label": "Mobiliario y Equipo", "section": "activo", "codes": ("1210",)},
+    {"key": "equipo_de_computo", "label": "Equipo de Computo", "section": "activo", "codes": ("1220",)},
+    {"key": "equipo_de_transporte", "label": "Equipo de Transporte", "section": "activo", "codes": ("1230",)},
+    {"key": "maquinaria_y_equipo", "label": "Maquinaria y Equipo", "section": "activo", "codes": ("1240",)},
+    {"key": "depreciacion_acumulada", "label": "Depreciacion acumulada", "section": "activo", "codes": ("1215", "1225", "1235", "1245"), "sign": Decimal("-1")},
+    {"key": "proveedores", "label": "Proveedores", "section": "pasivo", "codes": ("2110",)},
+    {"key": "acreedores_diversos", "label": "Acreedores Diversos", "section": "pasivo", "codes": ("2120",)},
+    {"key": "anticipos_de_clientes", "label": "Anticipos de Clientes", "section": "pasivo", "codes": ("2130",)},
+    {"key": "impuestos_por_pagar", "label": "Impuestos por Pagar", "section": "pasivo", "codes": ("2140",)},
+    {"key": "otros_pasivos_ptu", "label": "Otros Pasivos PTU", "section": "pasivo", "codes": ("2160",)},
+    {"key": "capital_social", "label": "Capital Social", "section": "capital", "codes": ("3100",)},
+    {"key": "aportaciones_para_aumentos_de_capital", "label": "Aportaciones para aumentos de capital", "section": "capital", "codes": ("3110",)},
+    {"key": "resultados_de_ejercicios_anteriores", "label": "Resultados de ejercicios anteriores", "section": "capital", "codes": ("3160",)},
+)
+
+
+def build_input_views(rows: Iterable[NormalizedRow]) -> Dict[str, Tuple[Dict[str, Any], ...]]:
+    """Preserve BAL's original rows while exposing the leaf-only calculation view."""
+
+    normalized_rows = tuple(_row_as_mapping(row) for row in rows)
+    return {
+        "all_rows": normalized_rows,
+        "calculation_rows": tuple(leaf_account_rows(normalized_rows)),
+    }
+
+
+def build_bal_dataset(rows: Iterable[NormalizedRow]) -> Dict[str, Any]:
+    """Build the ordered BAL data without discarding accumulator rows."""
+
+    views = build_input_views(rows)
+    all_rows = views["all_rows"]
+    codes = [canonical_account_code(row.get("account_code") or row.get("top_account") or "") for row in all_rows]
+    bal_rows: List[Dict[str, Any]] = []
+    accumulator_rows: List[Dict[str, Any]] = []
+    for row, code in zip(all_rows, codes):
+        is_accumulator = bool(code and "-" not in code)
+        item = {
+            "account_raw": row.get("account_raw"),
+            "account_code": code,
+            "account_name": row.get("account_name"),
+            "saldo_inicial": money_to_float(to_decimal(row.get("saldo_inicial"))),
+            "debe": money_to_float(to_decimal(row.get("debe"))),
+            "haber": money_to_float(to_decimal(row.get("haber"))),
+            "saldo_final": money_to_float(to_decimal(row.get("saldo_final"))),
+            "is_accumulator": is_accumulator,
+            "source_row": row.get("source_row"),
+        }
+        bal_rows.append(item)
+        if is_accumulator:
+            accumulator_rows.append(item)
+
+    totals = {
+        field: money_to_float(sum((to_decimal(row[field]) for row in accumulator_rows), Decimal("0")))
+        for field in ("saldo_inicial", "debe", "haber", "saldo_final")
+    }
+    return {
+        "rows": bal_rows,
+        "all_rows": bal_rows,
+        "calculation_rows": list(views["calculation_rows"]),
+        "accumulator_rows": accumulator_rows,
+        "sumas_iguales": {
+            "accumulator_source_rows": [row["source_row"] for row in accumulator_rows],
+            "totals": totals,
+        },
+    }
+
+
+def resolve_account_code(
+    rows: Iterable[NormalizedRow],
+    account_code: str,
+    *,
+    tolerance: float | Decimal = 1.0,
+) -> Dict[str, Any]:
+    """Resolve a code once, preferring its accumulator over descendant leaves.
+
+    The returned evidence is intentionally complete so callers can expose an
+    ``aggregate_detail_mismatch`` warning without reimplementing this policy.
+    """
+
+    views = build_input_views(rows)
+    all_rows = views["all_rows"]
+    expected = canonical_account_code(account_code)
+    exact_rows = tuple(
+        row for row in all_rows
+        if canonical_account_code(row.get("account_code") or row.get("top_account") or "") == expected
+    )
+    descendant_leaves = tuple(
+        row for row in views["calculation_rows"]
+        if (code := canonical_account_code(row.get("account_code") or row.get("top_account") or ""))
+        and code.startswith(f"{expected}-")
+    )
+    accumulator_amount = sum((to_decimal(row.get("saldo_final")) for row in exact_rows), Decimal("0"))
+    leaf_amount = sum((to_decimal(row.get("saldo_final")) for row in descendant_leaves), Decimal("0"))
+    difference = accumulator_amount - leaf_amount
+    tolerance_amount = to_decimal(tolerance)
+
+    if exact_rows:
+        amount = accumulator_amount
+        policy = "exact_accumulator"
+    elif descendant_leaves:
+        amount = leaf_amount
+        policy = "leaf_fallback"
+    else:
+        amount = Decimal("0")
+        policy = "missing_zero"
+
+    return {
+        "account_code": expected,
+        "amount": amount,
+        "accumulator_amount": accumulator_amount if exact_rows else None,
+        "leaf_amount": leaf_amount,
+        "difference": difference if exact_rows else None,
+        "policy": policy,
+        "exact_rows": tuple(exact_rows),
+        "leaf_rows": tuple(descendant_leaves),
+        "aggregate_detail_mismatch": bool(exact_rows and descendant_leaves and abs(difference) > tolerance_amount),
+    }
+
+
+def build_bg_dataset(
+    rows: Iterable[NormalizedRow],
+    *,
+    result_ejercicio: Any = None,
+    tolerance: float | Decimal = 1.0,
+    company: str | None = None,
+    period: str | None = None,
+    source_path: str | None = None,
+) -> Dict[str, Any]:
+    """Build the BG dataset from account codes, never from manual row numbers."""
+
+    views = build_input_views(rows)
+    all_rows = views["all_rows"]
+    warnings: List[Dict[str, Any]] = []
+    lines: List[Dict[str, Any]] = []
+    totals = {"activo": Decimal("0"), "pasivo": Decimal("0"), "capital": Decimal("0")}
+
+    for definition in BG_LINE_DEFINITIONS:
+        resolutions = [resolve_account_code(all_rows, code, tolerance=tolerance) for code in definition["codes"]]
+        amount = sum((resolution["amount"] for resolution in resolutions), Decimal("0")) * to_decimal(definition.get("sign", 1))
+        section = str(definition["section"])
+        totals[section] += amount
+        for resolution in resolutions:
+            warnings.extend(_resolution_warnings(resolution, definition))
+        lines.append(
+            {
+                "key": definition["key"],
+                "label": definition["label"],
+                "section": section,
+                "account_codes": list(definition["codes"]),
+                "amount": money_to_float(amount),
+                "resolutions": [_resolution_payload(resolution) for resolution in resolutions],
+            }
+        )
+
+    if result_ejercicio is None:
+        result_amount = Decimal("0")
+        warnings.append({
+            "code": "resultado_ejercicio_no_proporcionado",
+            "message": "No se proporciono el resultado generado por ER; se conserva cero.",
+        })
+    else:
+        result_amount = to_decimal(result_ejercicio)
+    totals["capital"] += result_amount
+    lines.append({
+        "key": "resultado_del_ejercicio",
+        "label": "Resultado del ejercicio",
+        "section": "capital",
+        "account_codes": [],
+        "amount": money_to_float(result_amount),
+        "resolutions": [],
+    })
+
+    difference = totals["activo"] - (totals["pasivo"] + totals["capital"])
+    tolerance_amount = to_decimal(tolerance)
+    balance = {
+        "reference": "BG!L47",
+        "formula": "F45-L45",
+        "total_activo": money_to_float(totals["activo"]),
+        "total_pasivo": money_to_float(totals["pasivo"]),
+        "capital_contable": money_to_float(totals["capital"]),
+        "diferencia_cuadre": float(difference),
+        "tolerance": float(tolerance_amount),
+        "cuadra": abs(difference) < tolerance_amount,
+        "balanza_no_cuadra": abs(difference) >= tolerance_amount,
+    }
+    return {
+        "company": company,
+        "period": period,
+        "source_path": source_path,
+        "lines": lines,
+        "warnings": warnings,
+        "input_views": {"all_rows": len(all_rows), "calculation_rows": len(views["calculation_rows"])},
+        "balance": balance,
+        **balance,
+    }
+
+
 def build_er_dataset(
     rows: Iterable[NormalizedRow],
     *,
@@ -277,7 +484,8 @@ def build_er_dataset(
     Percentages for column J are calculated against H18, matching the manual.
     """
 
-    leaf_rows = leaf_account_rows(rows)
+    input_views = build_input_views(rows)
+    leaf_rows = input_views["calculation_rows"]
     amounts: Dict[str, Money] = {}
     account_matches: Dict[str, List[Dict[str, Any]]] = {}
     warnings: List[Dict[str, Any]] = []
@@ -603,10 +811,20 @@ def canonical_account_code(value: Any) -> str:
     return "".join(clean).strip("-")
 
 
+def _row_as_mapping(row: NormalizedRow | Any) -> Dict[str, Any]:
+    if isinstance(row, Mapping):
+        return dict(row)
+    if hasattr(row, "to_dict"):
+        return dict(row.to_dict())
+    if hasattr(row, "__dict__"):
+        return dict(vars(row))
+    raise TypeError(f"Unsupported normalized row: {type(row)!r}")
+
+
 def leaf_account_rows(rows: Iterable[NormalizedRow]) -> Tuple[NormalizedRow, ...]:
     """Return leaf/detail accounts so accumulator rows are not double counted."""
 
-    materialized = tuple(rows)
+    materialized = tuple(_row_as_mapping(row) for row in rows)
     codes = {
         canonical_account_code(row.get("account_code") or row.get("top_account") or "")
         for row in materialized
@@ -645,6 +863,52 @@ def _code_matches(account_code: str, expected_codes: Sequence[str]) -> bool:
         for expected in expected_codes
         if expected
     )
+
+
+def _resolution_payload(resolution: Mapping[str, Any]) -> Dict[str, Any]:
+    return {
+        "account_code": resolution["account_code"],
+        "amount": money_to_float(to_decimal(resolution["amount"])),
+        "accumulator_amount": (
+            None if resolution["accumulator_amount"] is None
+            else money_to_float(to_decimal(resolution["accumulator_amount"]))
+        ),
+        "leaf_amount": money_to_float(to_decimal(resolution["leaf_amount"])),
+        "difference": (
+            None if resolution["difference"] is None
+            else float(to_decimal(resolution["difference"]))
+        ),
+        "policy": resolution["policy"],
+    }
+
+
+def _resolution_warnings(
+    resolution: Mapping[str, Any],
+    definition: Mapping[str, Any],
+) -> List[Dict[str, Any]]:
+    if resolution["policy"] == "missing_zero":
+        return [{
+            "code": "cuenta_no_encontrada",
+            "line_key": definition["key"],
+            "label": definition["label"],
+            "account_code": resolution["account_code"],
+            "message": f"No se encontro la cuenta {resolution['account_code']}; se devuelve cero.",
+        }]
+    if resolution["aggregate_detail_mismatch"]:
+        return [{
+            "code": "aggregate_detail_mismatch",
+            "line_key": definition["key"],
+            "account_code": resolution["account_code"],
+            "accumulator": money_to_float(to_decimal(resolution["accumulator_amount"])),
+            "leaf_sum": money_to_float(to_decimal(resolution["leaf_amount"])),
+            "difference": float(to_decimal(resolution["difference"])),
+            "policy": resolution["policy"],
+            "message": (
+                f"El acumulador {resolution['account_code']} difiere de la suma de hojas; "
+                "se uso el acumulador exacto."
+            ),
+        }]
+    return []
 
 
 def _calculate_er_totals(amounts: Dict[str, Money]) -> None:

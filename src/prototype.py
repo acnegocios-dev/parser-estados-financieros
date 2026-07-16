@@ -7,17 +7,17 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from .engine import build_er_dataset
+    from .engine import build_bal_dataset, build_bg_dataset, build_er_dataset
     from .parser import BalanzaRow, parse_balanza
     from .runtime_metadata import build_runtime_metadata, sha256_file
     from .validation import recalculate_workbook, validate_balance_sheet, validate_generated_workbook
-    from .workbook import save_er_workbook
+    from .workbook import save_financial_statements_workbook
 except ImportError:  # pragma: no cover - supports direct script execution.
-    from engine import build_er_dataset
+    from engine import build_bal_dataset, build_bg_dataset, build_er_dataset
     from parser import BalanzaRow, parse_balanza
     from runtime_metadata import build_runtime_metadata, sha256_file
     from validation import recalculate_workbook, validate_balance_sheet, validate_generated_workbook
-    from workbook import save_er_workbook
+    from workbook import save_financial_statements_workbook
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,8 +25,19 @@ DEFAULT_INPUT = ROOT / "sample-inputs" / "balanza_SME170717GA0_2026_07.xls"
 OUTPUT_DIR = ROOT / "sample-outputs"
 
 
-def run_prototype(input_path: str | Path = DEFAULT_INPUT) -> dict[str, Any]:
+def run_prototype(
+    input_path: str | Path = DEFAULT_INPUT,
+    *,
+    output_dir: str | Path | None = None,
+) -> dict[str, Any]:
+    """Generate the three-sheet workbook from one uploaded balanza.
+
+    ``output_dir`` lets request handlers and tests keep generated artifacts in
+    their own temporary directory.  The legacy default remains available for
+    the command-line prototype only.
+    """
     source = Path(input_path)
+    target_dir = Path(output_dir) if output_dir is not None else OUTPUT_DIR
     parsed = parse_balanza(source)
     leaf_rows = _leaf_rows(parsed.rows)
     rows = [row.to_dict() for row in leaf_rows]
@@ -37,11 +48,23 @@ def run_prototype(input_path: str | Path = DEFAULT_INPUT) -> dict[str, Any]:
         source_path=parsed.source_path,
     )
 
-    workbook_result = save_er_workbook(
+    bg_dataset = build_bg_dataset(
+        parsed.rows,
+        result_ejercicio=engine_result["raw_amounts"]["resultado_ejercicio"],
+        company=parsed.company_name,
+        period=parsed.period.period_ym,
+        source_path=parsed.source_path,
+    )
+    bal_dataset = build_bal_dataset(parsed.rows)
+    workbook_result = save_financial_statements_workbook(
         engine_result,
+        output_path=_output_path(parsed, target_dir),
+        bg_dataset=bg_dataset,
+        bal_dataset=bal_dataset,
         metadata={
             "company": parsed.company_name,
             "period": parsed.period.period_ym,
+            "rfc": parsed.period.rfc,
             "source_path": str(source),
         },
         source_path=source,
@@ -111,6 +134,7 @@ def run_prototype(input_path: str | Path = DEFAULT_INPUT) -> dict[str, Any]:
             "sign_policy": engine_result["sign_policy"],
         },
         "workbook": {
+            "sheet_names": list(workbook_result.workbook.sheetnames),
             "formula_cells": workbook_result.formula_cells,
             "formula_cells_count": len(workbook_result.formula_cells),
             "warnings": workbook_result.warnings,
@@ -136,7 +160,7 @@ def run_prototype(input_path: str | Path = DEFAULT_INPUT) -> dict[str, Any]:
             "El XLSX generado no copia formulas #REF! ni referencias externas del manual.",
         ],
     }
-    report_path = _report_path(parsed)
+    report_path = _report_path(parsed, target_dir)
     report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
     report["report_path"] = str(report_path)
     return report
@@ -179,12 +203,21 @@ def _validation_to_dict(validation: Any) -> dict[str, Any]:
     return data
 
 
-def _report_path(parsed: ParsedBalanza) -> Path:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+def _output_path(parsed: Any, output_dir: Path) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
     company = (parsed.company_name or "empresa").lower()
     slug = "".join(ch if ch.isalnum() else "_" for ch in company)
     slug = "_".join(part for part in slug.split("_") if part)[:60] or "empresa"
-    return OUTPUT_DIR / f"validation_report_{slug}_{parsed.period.period_ym.replace('-', '_')}.json"
+    period = parsed.period.period_ym.replace("-", "_")
+    return output_dir / f"estados_financieros_{slug}_{period}.xlsx"
+
+
+def _report_path(parsed: Any, output_dir: Path) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    company = (parsed.company_name or "empresa").lower()
+    slug = "".join(ch if ch.isalnum() else "_" for ch in company)
+    slug = "_".join(part for part in slug.split("_") if part)[:60] or "empresa"
+    return output_dir / f"validation_report_{slug}_{parsed.period.period_ym.replace('-', '_')}.json"
 
 
 def _balance_check_to_dict(balance_check: Any) -> dict[str, Any]:

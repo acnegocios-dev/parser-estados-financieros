@@ -1,0 +1,27 @@
+{
+  "version": "2026-07-16.bg-v1",
+  "source": "manual geometry extracted offline; runtime is self-contained",
+  "sheet": "BG",
+  "geometry": {
+    "default_row_height": 13.2,
+    "default_column_width": 10,
+    "base_column_width": 10,
+    "column_widths": {
+      "A": 4.33,
+      "B": 4.33203125,
+      "C": 16.88671875,
+      "D": 10.6640625,
+      "E": 16.6640625,
+      "F": 13,
+      "G": 3.44140625,
+      "H": 5,
+      "I": 20.33203125,
+      "J": 7.109375,
+      "K": 16.6640625,
+      "L": 13
+    },
+    "row_heights": {"7": 22.2, "8": 14.4, "9": 12.75, "10": 12.75},
+    "page_margins": {"left": 0.7086614, "right": 0.7086614, "top": 0.7480315, "bottom": 0.7480315},
+    "page_setup": {"orientation": "portrait"}
+  }
+}

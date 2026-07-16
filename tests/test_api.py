@@ -20,7 +20,7 @@ class ApiRuntimeMetadataTest(unittest.TestCase):
         self.assertIn("git_commit", payload)
         self.assertIsInstance(payload["worktree_dirty"], bool)
         self.assertTrue(payload["process_started_at"])
-        self.assertEqual(payload["generator_profile"], "manual-er-parity")
+        self.assertEqual(payload["generator_profile"], "manual-eeff-three-sheet")
         self.assertTrue(payload["generator_profile_version"])
         self.assertEqual(payload["formula_validation_mode"], "static_only")
         self.assertFalse(payload["formula_recalculation_performed"])
@@ -32,7 +32,7 @@ class ApiRuntimeMetadataTest(unittest.TestCase):
 
     def test_process_exposes_output_identity_but_not_server_paths(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            output_path = Path(directory) / "estado_resultados.xlsx"
+            output_path = Path(directory) / "estados_financieros_empresa_de_prueba_2026_07.xlsx"
             workbook = Workbook()
             workbook.active["A1"] = "evidence"
             workbook.save(output_path)
@@ -63,14 +63,15 @@ class ApiRuntimeMetadataTest(unittest.TestCase):
                     "warnings": [],
                 },
                 "output_xlsx": str(output_path),
+                "workbook": {"sheet_names": ["BG", "ER", "BAL"]},
                 "runtime": {
                     "service_version": "estados-financieros-api-test",
                     "git_commit": "abcdef1234567890",
                     "worktree_dirty": True,
                     "process_started_at": "2026-07-13T18:00:00+00:00",
-                    "generator_profile": "manual-er-parity",
-                    "generator_profile_version": "2026-07-13.manual-er-v1",
-                    "generated_at": "2026-07-13T18:01:00+00:00",
+                    "generator_profile": "manual-eeff-three-sheet",
+                    "generator_profile_version": "2026-07-16.three-sheet-v1",
+                    "generated_at": "2026-07-16T18:01:00+00:00",
                     "output_sha256": "a" * 64,
                     "formula_validation_mode": "static_only",
                 },
@@ -78,7 +79,9 @@ class ApiRuntimeMetadataTest(unittest.TestCase):
 
             payload = build_process_payload(report)
 
-        self.assertEqual(payload["output_filename"], "estado_resultados.xlsx")
+        self.assertTrue(payload["output_filename"].startswith("estados_financieros_"))
+        self.assertEqual(payload["sheet_names"], ["BG", "ER", "BAL"])
+        self.assertEqual(payload["generator_profile"], "manual-eeff-three-sheet")
         self.assertEqual(payload["output_sha256"], "a" * 64)
         self.assertEqual(payload["formula_validation_mode"], "static_only")
         self.assertEqual(

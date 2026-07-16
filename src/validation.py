@@ -15,9 +15,9 @@ from openpyxl import load_workbook
 from openpyxl.workbook.workbook import Workbook
 
 try:
-    from .engine import canonical_account_code, leaf_account_rows, to_decimal
+    from .engine import build_bg_dataset, canonical_account_code, leaf_account_rows, to_decimal
 except ImportError:  # pragma: no cover - supports direct script execution.
-    from engine import canonical_account_code, leaf_account_rows, to_decimal
+    from engine import build_bg_dataset, canonical_account_code, leaf_account_rows, to_decimal
 
 
 FORMULA_ERROR_TOKENS = ("#REF!", "#DIV/0!", "#VALUE!", "#NAME?", "#N/A", "#NUM!", "#NULL!")
@@ -58,6 +58,16 @@ class FormulaRecalculationResult:
     evidence_path: str | None = None
     blocked: bool = False
     warnings: list[str] = field(default_factory=list)
+
+
+@dataclass
+class FinancialStatementsValidationResult:
+    """Static workbook-contract evidence, kept distinct from formula recalculation."""
+
+    ok: bool
+    issues: list[str] = field(default_factory=list)
+    formula_validation: ValidationResult | None = None
+    evidence: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -166,86 +176,302 @@ def validate_generated_workbook(
             evaluated_workbook.close()
 
 
+def validate_financial_statements_workbook(
+    workbook_or_path: Workbook | str | Path,
+    *,
+    expected_company: str | None = None,
+    expected_period: str | None = None,
+    expected_rfc: str | None = None,
+    normalized_rows: int | None = None,
+    bal_dataset: Mapping[str, Any] | None = None,
+    bg_dataset: Mapping[str, Any] | None = None,
+) -> FinancialStatementsValidationResult:
+    """Validate the three-sheet contract without claiming formula evaluation.
+
+    ``bal_dataset`` and ``bg_dataset`` supply programmatic evidence for totals
+    whose worksheet formulas intentionally remain unevaluated until an Excel
+    compatible engine recalculates the saved file.
+    """
+
+    workbook, close_after = _load_workbook(workbook_or_path)
+    try:
+        issues: list[str] = []
+        expected_sheets = ["BG", "ER", "BAL"]
+        if workbook.sheetnames != expected_sheets:
+            issues.append(f"Expected sheets {expected_sheets}; found {workbook.sheetnames}.")
+        if [sheet.sheet_state for sheet in workbook.worksheets] != ["visible"] * 3:
+            issues.append("All financial-statement sheets must be explicitly visible.")
+        if list(workbook.defined_names):
+            issues.append("Workbook contains inherited defined names.")
+        if getattr(workbook, "_external_links", []):
+            issues.append("Workbook contains external links.")
+        for worksheet in workbook.worksheets:
+            if getattr(worksheet, "_images", []):
+                issues.append(f"{worksheet.title} contains inherited images.")
+
+        formula_validation = validate_generated_workbook(workbook, formula_mode="static_only")
+        if not formula_validation.formula_static_validation:
+            issues.append("Workbook contains formula error tokens or external workbook formulas.")
+        if formula_validation.formula_recalculation_performed:
+            issues.append("Static validation must not claim formula recalculation.")
+        if formula_validation.formula_evaluated_error_count is not None:
+            issues.append("Static validation must not claim evaluated formula errors.")
+        for title in expected_sheets:
+            if title in workbook.sheetnames and not any(
+                isinstance(cell.value, str) and cell.value.startswith("=")
+                for row in workbook[title].iter_rows() for cell in row
+            ):
+                issues.append(f"{title} must contain internal formulas.")
+
+        if "BG" in workbook.sheetnames:
+            _validate_white_sheet(workbook["BG"], 1, 47, 1, 12, issues)
+            _validate_bg_contract(workbook["BG"], expected_company, expected_period, issues)
+        if "ER" in workbook.sheetnames:
+            _validate_white_sheet(workbook["ER"], 1, 70, 1, 10, issues)
+        if "BAL" in workbook.sheetnames:
+            _validate_bal_contract(
+                workbook["BAL"], expected_company, expected_period, expected_rfc,
+                normalized_rows, issues,
+            )
+        _validate_forbidden_fills(workbook, issues)
+
+        evidence = _financial_statements_evidence(bal_dataset, bg_dataset)
+        if evidence.get("bal_sumas_iguales"):
+            totals = evidence["bal_sumas_iguales"]
+            if not _within_cent(totals["debe"], 584.64) or not _within_cent(totals["haber"], 584.64):
+                issues.append("Programmatic BAL Debe/Haber evidence does not equal 584.64.")
+            if not _within_cent(totals["saldo_final"], 0.0):
+                issues.append("Programmatic BAL saldo final evidence does not equal zero.")
+        if evidence.get("bg_balance"):
+            balance = evidence["bg_balance"]
+            if not _within_cent(balance["difference"], balance["report_difference"]):
+                issues.append("BG formula evidence and programmatic balance report differ by more than 0.01.")
+            if abs(balance["difference"]) >= 1:
+                issues.append("BG!L47 programmatic evidence is outside the strict balance tolerance.")
+
+        return FinancialStatementsValidationResult(
+            ok=not issues,
+            issues=issues,
+            formula_validation=formula_validation,
+            evidence=evidence,
+        )
+    finally:
+        if close_after:
+            workbook.close()
+
+
+def _validate_white_sheet(
+    ws,
+    min_row: int,
+    max_row: int,
+    min_column: int,
+    max_column: int,
+    issues: list[str],
+) -> None:
+    if ws.sheet_view.showGridLines is not False:
+        issues.append(f"{ws.title} must explicitly disable gridlines.")
+    for row in ws.iter_rows(min_row=min_row, max_row=max_row, min_col=min_column, max_col=max_column):
+        for cell in row:
+            if not _is_effectively_solid_white(ws, cell):
+                issues.append(f"{ws.title}!{cell.coordinate} is not solid white.")
+                return
+
+
+def _is_effectively_solid_white(ws, cell) -> bool:
+    """Accept the white anchor of a merged range as its effective fill.
+
+    LibreOffice drops styles from non-anchor cells in merged ranges while
+    preserving the visual fill from the anchor.  The workbook contract is
+    visual and cell-safe, so validate that representation without accepting a
+    non-white merged title.
+    """
+
+    effective_cell = cell
+    for merged_range in ws.merged_cells.ranges:
+        if cell.coordinate in merged_range:
+            effective_cell = ws.cell(merged_range.min_row, merged_range.min_col)
+            break
+    fill = effective_cell.fill
+    return (
+        fill.fill_type == "solid"
+        and fill.fgColor.type == "rgb"
+        and fill.fgColor.rgb in {"FFFFFFFF", "00FFFFFF"}
+    )
+
+
+def _validate_bg_contract(ws, company: str | None, period: str | None, issues: list[str]) -> None:
+    expected_merges = {"B7:L7", "B8:L8", "B9:L9", "B10:L10"}
+    if {str(item) for item in ws.merged_cells.ranges} != expected_merges:
+        issues.append("BG title merges do not match the versioned contract.")
+    if ws["B8"].value != "Balance General":
+        issues.append("BG title is missing.")
+    if company and ws["B7"].value != company:
+        issues.append("BG company title was not derived from the loaded input.")
+    if period and ws["B9"].value != _bg_period_label(period):
+        issues.append("BG period title was not derived from the loaded input.")
+    for coordinate, formula in (("L23", "=ER!H70"), ("F45", "=SUM(F13:F26)"), ("L45", "=SUM(L13:L17,L20:L23)"), ("L47", "=F45-L45")):
+        if ws[coordinate].value != formula:
+            issues.append(f"BG!{coordinate} must use {formula}.")
+    for coordinate in ("F45", "L45", "L47"):
+        if ws[coordinate].number_format == "General":
+            issues.append(f"BG!{coordinate} is missing a monetary number format.")
+
+
+def _validate_bal_contract(
+    ws,
+    company: str | None,
+    period: str | None,
+    rfc: str | None,
+    normalized_rows: int | None,
+    issues: list[str],
+) -> None:
+    expected_merges = {"C1:G1", "C2:G2", "C3:G3", "C4:G4"}
+    if {str(item) for item in ws.merged_cells.ranges} != expected_merges:
+        issues.append("BAL title merges do not match the versioned contract.")
+    if company and ws["C1"].value != company:
+        issues.append("BAL company title was not derived from the loaded input.")
+    if ws["C2"].value != "Balanza de Comprobacion":
+        issues.append("BAL title is missing.")
+    if period and ws["C3"].value != _bal_period_label(period):
+        issues.append("BAL period title was not derived from the loaded input.")
+    if rfc and ws["C4"].value != f"RFC: {rfc}":
+        issues.append("BAL RFC title was not derived from the loaded input.")
+    if [ws.cell(6, column).value for column in range(3, 8)] != [
+        "CUENTA", "SALDO INICIAL", "DEBE", "HABER", "SALDO FINAL"
+    ]:
+        issues.append("BAL header row is invalid.")
+    sum_row = 8 + normalized_rows if normalized_rows is not None else None
+    if normalized_rows is not None:
+        if ws.cell(7 + normalized_rows, 3).value is not None:
+            issues.append("BAL separator row must be blank.")
+        if ws.cell(sum_row, 3).value != "SUMAS IGUALES":
+            issues.append("BAL SUMAS IGUALES row is not dynamic or is misplaced.")
+        if ws.print_area != f"'BAL'!$C$1:$G${sum_row}":
+            issues.append("BAL print area is not dynamic.")
+        for coordinate in (f"E{sum_row}", f"F{sum_row}", f"G{sum_row}"):
+            if not (isinstance(ws[coordinate].value, str) and ws[coordinate].value.startswith("=")):
+                issues.append(f"BAL!{coordinate} must be a formula.")
+    if ws.freeze_panes is not None:
+        issues.append("BAL must not retain the manual freeze pane residue.")
+    expected_widths = {"C": 31.33203125, "D": 17.33203125, "E": 13, "F": 13, "G": 13}
+    for column, width in expected_widths.items():
+        if ws.column_dimensions[column].width != width:
+            issues.append(f"BAL column {column} width differs from the versioned contract.")
+    expected_heights = {1: 13.8, 2: 15, 3: 17.4, 4: 15, 5: 17.4}
+    for row, height in expected_heights.items():
+        if ws.row_dimensions[row].height != height:
+            issues.append(f"BAL row {row} height differs from the versioned contract.")
+    if ws.page_setup.orientation != "portrait":
+        issues.append("BAL must use portrait orientation.")
+    for name, expected in (("left", 0.7086614), ("right", 0.7086614), ("top", 0.7480315), ("bottom", 0.7480315)):
+        if getattr(ws.page_margins, name) != expected:
+            issues.append(f"BAL {name} margin differs from the versioned contract.")
+    if ws["C6"].border.left.style != "hair" or ws["E7"].number_format == "General":
+        issues.append("BAL borders or monetary formats are missing.")
+    for row in ws.iter_rows():
+        for cell in row:
+            if cell.column < 3 or cell.column > 7:
+                if cell.value is not None:
+                    issues.append(f"BAL contains data outside C:G at {cell.coordinate}.")
+                    return
+
+
+def _validate_forbidden_fills(workbook: Workbook, issues: list[str]) -> None:
+    forbidden = {"FFFFFF00", "FF00A933"}
+    for ws in workbook.worksheets:
+        for row in ws.iter_rows():
+            for cell in row:
+                color = cell.fill.fgColor
+                if cell.fill.fill_type and color.type == "rgb" and color.rgb in forbidden:
+                    issues.append(f"{ws.title}!{cell.coordinate} has a forbidden mask fill.")
+                    return
+
+
+def _financial_statements_evidence(
+    bal_dataset: Mapping[str, Any] | None,
+    bg_dataset: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    evidence: dict[str, Any] = {
+        "formula_recalculation_performed": False,
+        "formula_evaluated_error_count": None,
+    }
+    if bal_dataset:
+        totals = bal_dataset.get("sumas_iguales", {}).get("totals", {})
+        if totals:
+            debe = float(totals.get("debe", 0))
+            haber = float(totals.get("haber", 0))
+            saldo_inicial = 0.0  # BAL's total row is a zero control, not a source-row sum.
+            evidence["bal_sumas_iguales"] = {
+                "saldo_inicial": saldo_inicial,
+                "debe": debe,
+                "haber": haber,
+                "saldo_final": saldo_inicial + debe - haber,
+            }
+    if bg_dataset:
+        balance = bg_dataset.get("balance", bg_dataset)
+        difference = float(balance.get("diferencia_cuadre", 0))
+        evidence["bg_balance"] = {
+            "total_activo": float(balance.get("total_activo", 0)),
+            "total_pasivo": float(balance.get("total_pasivo", 0)),
+            "capital_contable": float(balance.get("capital_contable", 0)),
+            "difference": difference,
+            "report_difference": float(balance.get("diferencia_cuadre", 0)),
+            "reference": balance.get("reference", CONCEPTUAL_BALANCE_REFERENCE),
+        }
+    return evidence
+
+
+def _within_cent(left: float, right: float) -> bool:
+    return abs(float(left) - float(right)) <= 0.01
+
+
+def _bg_period_label(period: str) -> str:
+    from calendar import monthrange
+
+    months = ("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre")
+    year, month = (int(value) for value in period.split("-", 1))
+    return f"Al {monthrange(year, month)[1]} de {months[month - 1]} de {year}"
+
+
+def _bal_period_label(period: str) -> str:
+    months = ("ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE")
+    year, month = (int(value) for value in period.split("-", 1))
+    return f"{months[month - 1]}.{year}"
+
+
 def validate_balance_sheet(
     rows: Iterable[Mapping[str, Any] | Any],
     *,
     tolerance: float = BALANCE_TOLERANCE_DEFAULT,
     result_ejercicio: float | int | str | Decimal | None = None,
 ) -> BalanceCheckResult:
-    """Validate the balance equation derived from normalized balance rows.
+    """Validate the exact accounting equation that future ``BG!L47`` uses."""
 
-    The calculation is programmatic and does not depend on BG!L47. Assets and
-    liabilities use leaf/detail accounts. When `result_ejercicio` is provided,
-    capital uses top-level balances plus the generated current result, matching
-    the manual BG composition; without it, the legacy leaf-only behavior is
-    preserved for standalone callers.
-    """
-
-    normalized_rows = tuple(_row_to_mapping(row) for row in rows)
-    leaf_rows = leaf_account_rows(normalized_rows)
-    totals: dict[str, Decimal] = {"1": Decimal("0"), "2": Decimal("0"), "3": Decimal("0")}
-    details: dict[str, list[dict[str, Any]]] = {"1": [], "2": [], "3": []}
-
-    balance_rows = {
-        "1": leaf_rows,
-        "2": leaf_rows,
-        "3": _capital_balance_rows(normalized_rows) if result_ejercicio is not None else leaf_rows,
-    }
-    for class_prefix, class_rows in balance_rows.items():
-        for row in class_rows:
-            account_code = canonical_account_code(_read_field(row, ("account_code", "top_account", "cuenta")) or "")
-            if not account_code or not account_code.startswith(class_prefix):
-                continue
-            saldo_final = to_decimal(_read_field(row, ("saldo_final", "saldoFinal", "saldo")))
-            if class_prefix == "1" and "dep acum" in str(
-                _read_field(row, ("account_name", "nombre")) or ""
-            ).casefold():
-                saldo_final = -saldo_final
-            totals[class_prefix] += saldo_final
-            details[class_prefix].append(
-                {
-                    "source_row": _read_field(row, ("source_row",)),
-                    "account_code": account_code,
-                    "account_name": _read_field(row, ("account_name", "nombre")) or "",
-                    "saldo_final": _quantize_money(saldo_final),
-                }
-            )
-
-    if result_ejercicio is not None:
-        resultado = to_decimal(result_ejercicio)
-        totals["3"] += resultado
-        details["3"].append(
-            {
-                "source_row": None,
-                "account_code": "resultado_ejercicio",
-                "account_name": "Resultado del ejercicio generado por ER",
-                "saldo_final": _quantize_money(resultado),
-            }
+    dataset = build_bg_dataset(
+        (_row_to_mapping(row) for row in rows),
+        result_ejercicio=result_ejercicio,
+        tolerance=tolerance,
+    )
+    balance = dataset["balance"]
+    component_rows = {"activo": [], "pasivo": [], "capital": []}
+    for line in dataset["lines"]:
+        component_rows[line["section"]].append(
+            {"rubro": line["key"], "total": line["amount"], "cuentas": line["resolutions"]}
         )
-
-    total_activo = totals["1"]
-    total_pasivo = totals["2"]
-    capital_contable = totals["3"]
-    diferencia = total_activo - (total_pasivo + capital_contable)
-    cuadra = abs(diferencia) < Decimal(str(tolerance))
-
     return BalanceCheckResult(
-        total_activo=_quantize_money(total_activo),
-        total_pasivo=_quantize_money(total_pasivo),
-        capital_contable=_quantize_money(capital_contable),
-        diferencia_cuadre=_quantize_balance_difference(diferencia),
-        tolerance=float(tolerance),
-        cuadra=cuadra,
-        balanza_no_cuadra=not cuadra,
+        total_activo=float(balance["total_activo"]),
+        total_pasivo=float(balance["total_pasivo"]),
+        capital_contable=float(balance["capital_contable"]),
+        diferencia_cuadre=float(balance["diferencia_cuadre"]),
+        tolerance=float(balance["tolerance"]),
+        cuadra=bool(balance["cuadra"]),
+        balanza_no_cuadra=bool(balance["balanza_no_cuadra"]),
         componentes=[
-            BalanceComponent(rubro="activo", total=_quantize_money(total_activo), cuentas=details["1"]),
-            BalanceComponent(rubro="pasivo", total=_quantize_money(total_pasivo), cuentas=details["2"]),
-            BalanceComponent(
-                rubro="capital_contable",
-                total=_quantize_money(capital_contable),
-                cuentas=details["3"],
-            ),
+            BalanceComponent(rubro="activo", total=float(balance["total_activo"]), cuentas=component_rows["activo"]),
+            BalanceComponent(rubro="pasivo", total=float(balance["total_pasivo"]), cuentas=component_rows["pasivo"]),
+            BalanceComponent(rubro="capital_contable", total=float(balance["capital_contable"]), cuentas=component_rows["capital"]),
         ],
+        warnings=list(dataset["warnings"]),
     )
 
 

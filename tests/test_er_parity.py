@@ -152,12 +152,19 @@ class ErWorkbookParityTest(unittest.TestCase):
         for name in ("left", "right", "top", "bottom", "header", "footer"):
             self.assertEqual(getattr(generated.page_margins, name), getattr(manual.page_margins, name))
 
-    def test_key_styles_are_parametrically_equal_to_manual(self) -> None:
+    def test_key_non_fill_styles_match_manual_and_effective_area_is_white(self) -> None:
         generated = _build_workbook()["ER"]
         manual = load_workbook(MANUAL, data_only=False, keep_links=True)["ER"]
         for coordinate in KEY_STYLE_CELLS:
             with self.subTest(coordinate=coordinate):
-                self.assertEqual(_style_signature(generated[coordinate]), _style_signature(manual[coordinate]))
+                generated_style = _style_signature(generated[coordinate])
+                manual_style = _style_signature(manual[coordinate])
+                self.assertEqual(
+                    generated_style[:2] + generated_style[3:],
+                    manual_style[:2] + manual_style[3:],
+                )
+                self.assertEqual(generated[coordinate].fill.fill_type, "solid")
+                self.assertEqual(generated[coordinate].fill.fgColor.rgb, "FFFFFFFF")
 
     def test_style_spec_is_versioned_and_self_contained(self) -> None:
         spec = json.loads(STYLE_SPEC.read_text(encoding="utf-8"))

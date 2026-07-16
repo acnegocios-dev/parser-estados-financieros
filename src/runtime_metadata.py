@@ -12,16 +12,25 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SERVICE_VERSION = "estados-financieros-api-2026-07-13"
+SERVICE_VERSION = "estados-financieros-api-2026-07-16"
 PROCESS_STARTED_AT = datetime.now(timezone.utc).isoformat()
 
 
 def _generator_profile() -> tuple[str, str]:
+    """Expose the versioned, self-contained three-sheet contract."""
+
     try:
-        spec = json.loads((ROOT / "src" / "er_style_spec.json").read_text(encoding="utf-8"))
-        return "manual-er-parity", str(spec.get("version") or "unknown")
+        specs = [
+            json.loads((ROOT / "src" / name).read_text(encoding="utf-8"))
+            for name in ("er_style_spec.json", "bg_style_spec.json", "bal_style_spec.json")
+        ]
     except (OSError, ValueError):
-        return "manual-er-parity", "unknown"
+        return "manual-eeff-three-sheet", "unknown"
+
+    versions = [str(spec.get("version") or "unknown") for spec in specs]
+    if any(version == "unknown" for version in versions):
+        return "manual-eeff-three-sheet", "unknown"
+    return "manual-eeff-three-sheet", "2026-07-16.three-sheet-v1"
 
 
 def _git_value(*args: str) -> str:

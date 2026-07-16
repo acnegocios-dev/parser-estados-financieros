@@ -1,0 +1,15 @@
+{
+  "version": "2026-07-16.bal-v1",
+  "source": "manual geometry extracted offline; runtime is self-contained",
+  "sheet": "BAL",
+  "freeze_panes_decision": "none; A137 from the manual is a historical residue",
+  "geometry": {
+    "default_row_height": 13.2,
+    "default_column_width": 10,
+    "base_column_width": 10,
+    "column_widths": {"C": 31.33203125, "D": 17.33203125, "E": 13, "F": 13, "G": 13},
+    "row_heights": {"1": 13.8, "2": 15, "3": 17.4, "4": 15, "5": 17.4},
+    "page_margins": {"left": 0.7086614, "right": 0.7086614, "top": 0.7480315, "bottom": 0.7480315},
+    "page_setup": {"orientation": "portrait"}
+  }
+}
