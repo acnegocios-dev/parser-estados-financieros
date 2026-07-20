@@ -1,27 +1,1776 @@
 {
-  "version": "2026-07-16.bg-v1",
-  "source": "manual geometry extracted offline; runtime is self-contained",
+  "version": "2026-07-20.bg-v2",
+  "source": "EEFF_202602_AL_Serv_Prueba.xlsx",
+  "source_sha256": "991daeaa5b9f957e490e231164825640127cb850f01db865c04cfbb25e72b12c",
   "sheet": "BG",
+  "visible_range": "A1:L47",
   "geometry": {
-    "default_row_height": 13.2,
-    "default_column_width": 10,
-    "base_column_width": 10,
+    "default_row_height": 13.5,
+    "default_column_width": 8.34,
+    "base_column_width": 8,
     "column_widths": {
-      "A": 4.33,
-      "B": 4.33203125,
-      "C": 16.88671875,
-      "D": 10.6640625,
-      "E": 16.6640625,
-      "F": 13,
-      "G": 3.44140625,
-      "H": 5,
-      "I": 20.33203125,
-      "J": 7.109375,
-      "K": 16.6640625,
-      "L": 13
+      "A": 5.4,
+      "B": 3.92,
+      "C": 15.33,
+      "D": 9.69,
+      "E": 15.21,
+      "F": 13.0,
+      "G": 3.19,
+      "H": 4.54,
+      "I": 18.52,
+      "J": 6.5,
+      "K": 15.21,
+      "L": 13.0
     },
-    "row_heights": {"7": 22.2, "8": 14.4, "9": 12.75, "10": 12.75},
-    "page_margins": {"left": 0.7086614, "right": 0.7086614, "top": 0.7480315, "bottom": 0.7480315},
-    "page_setup": {"orientation": "portrait"}
+    "hidden_columns": [],
+    "row_heights": {
+      "5": 15.0,
+      "6": 15.0,
+      "7": 15.0,
+      "8": 17.25,
+      "9": 13.5,
+      "10": 13.5,
+      "13": 13.5,
+      "14": 13.5,
+      "16": 13.5,
+      "17": 13.5,
+      "18": 13.5,
+      "19": 13.5,
+      "20": 13.5,
+      "21": 13.5,
+      "22": 13.5,
+      "23": 13.5,
+      "24": 13.5,
+      "25": 13.5,
+      "26": 13.5,
+      "27": 15.0,
+      "28": 13.5,
+      "29": 13.5,
+      "30": 13.5,
+      "31": 13.5,
+      "32": 13.5,
+      "33": 13.5,
+      "34": 13.5,
+      "35": 15.0,
+      "36": 13.5,
+      "37": 13.5,
+      "38": 13.5,
+      "39": 13.5,
+      "40": 13.5,
+      "41": 13.5,
+      "42": 13.5,
+      "43": 13.5,
+      "45": 13.5,
+      "47": 13.5
+    },
+    "hidden_rows": [
+      38,
+      39,
+      40,
+      41,
+      42,
+      43
+    ],
+    "merged_ranges": [
+      "B10:L10",
+      "B7:L7",
+      "B8:L8",
+      "B9:L9"
+    ],
+    "page_margins": {
+      "left": 0.75,
+      "right": 0.75,
+      "top": 0.75,
+      "bottom": 0.75,
+      "header": 0.25,
+      "footer": 0.25
+    },
+    "page_setup": {
+      "orientation": "portrait",
+      "paperSize": 9,
+      "paperHeight": null,
+      "paperWidth": null,
+      "scale": 100,
+      "fitToHeight": null,
+      "fitToWidth": null,
+      "firstPageNumber": null,
+      "useFirstPageNumber": null,
+      "pageOrder": null,
+      "blackAndWhite": null,
+      "draft": null,
+      "cellComments": null,
+      "errors": null,
+      "horizontalDpi": null,
+      "verticalDpi": null,
+      "copies": null
+    },
+    "page_setup_properties": {
+      "fitToPage": null,
+      "autoPageBreaks": null
+    },
+    "print_options": {
+      "gridLines": null,
+      "gridLinesSet": null,
+      "headings": null,
+      "horizontalCentered": null,
+      "verticalCentered": null
+    },
+    "print_area": null,
+    "print_title_rows": null,
+    "print_title_cols": null,
+    "sheet_view": {
+      "showGridLines": true,
+      "topLeftCell": null,
+      "zoomScale": null,
+      "zoomScaleNormal": null,
+      "zoomScalePageLayoutView": null,
+      "view": null
+    },
+    "freeze_panes": null
+  },
+  "styles": [
+    {
+      "font": {
+        "name": "Arial",
+        "size": 11.0,
+        "bold": false,
+        "italic": false,
+        "underline": null,
+        "strike": null,
+        "color": {
+          "type": "theme",
+          "rgb": null,
+          "indexed": null,
+          "theme": 1,
+          "tint": 0.0
+        },
+        "vertAlign": null,
+        "charset": null,
+        "family": 2.0,
+        "scheme": "minor",
+        "outline": null,
+        "shadow": null,
+        "condense": null,
+        "extend": null
+      },
+      "alignment": {
+        "horizontal": null,
+        "vertical": null,
+        "textRotation": 0,
+        "wrapText": null,
+        "shrinkToFit": null,
+        "indent": 0.0,
+        "relativeIndent": 0.0,
+        "justifyLastLine": null,
+        "readingOrder": 0.0
+      },
+      "fill": {
+        "fillType": null,
+        "fgColor": {
+          "type": "rgb",
+          "rgb": "00000000",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "bgColor": {
+          "type": "rgb",
+          "rgb": "00000000",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        }
+      },
+      "border": {
+        "left": {
+          "style": null,
+          "color": null
+        },
+        "right": {
+          "style": null,
+          "color": null
+        },
+        "top": {
+          "style": null,
+          "color": null
+        },
+        "bottom": {
+          "style": null,
+          "color": null
+        },
+        "start": null,
+        "end": null,
+        "diagonal": {
+          "style": null,
+          "color": null
+        },
+        "diagonalUp": false,
+        "diagonalDown": false,
+        "outline": true,
+        "vertical": null,
+        "horizontal": null
+      },
+      "numberFormat": "General",
+      "protection": {
+        "locked": true,
+        "hidden": false
+      }
+    },
+    {
+      "font": {
+        "name": "Arial",
+        "size": 10.0,
+        "bold": false,
+        "italic": false,
+        "underline": null,
+        "strike": null,
+        "color": null,
+        "vertAlign": null,
+        "charset": null,
+        "family": 2.0,
+        "scheme": null,
+        "outline": null,
+        "shadow": null,
+        "condense": null,
+        "extend": null
+      },
+      "alignment": {
+        "horizontal": null,
+        "vertical": "center",
+        "textRotation": 0,
+        "wrapText": null,
+        "shrinkToFit": null,
+        "indent": 0.0,
+        "relativeIndent": 0.0,
+        "justifyLastLine": null,
+        "readingOrder": 0.0
+      },
+      "fill": {
+        "fillType": "solid",
+        "fgColor": {
+          "type": "rgb",
+          "rgb": "FFFFFFFF",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "bgColor": {
+          "type": "indexed",
+          "rgb": null,
+          "indexed": 64,
+          "theme": null,
+          "tint": 0.0
+        }
+      },
+      "border": {
+        "left": {
+          "style": null,
+          "color": null
+        },
+        "right": {
+          "style": null,
+          "color": null
+        },
+        "top": {
+          "style": null,
+          "color": null
+        },
+        "bottom": {
+          "style": null,
+          "color": null
+        },
+        "start": null,
+        "end": null,
+        "diagonal": {
+          "style": null,
+          "color": null
+        },
+        "diagonalUp": false,
+        "diagonalDown": false,
+        "outline": true,
+        "vertical": null,
+        "horizontal": null
+      },
+      "numberFormat": "General",
+      "protection": {
+        "locked": true,
+        "hidden": false
+      }
+    },
+    {
+      "font": {
+        "name": "Arial",
+        "size": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": null,
+        "strike": null,
+        "color": null,
+        "vertAlign": null,
+        "charset": null,
+        "family": 2.0,
+        "scheme": null,
+        "outline": null,
+        "shadow": null,
+        "condense": null,
+        "extend": null
+      },
+      "alignment": {
+        "horizontal": "center",
+        "vertical": "center",
+        "textRotation": 0,
+        "wrapText": null,
+        "shrinkToFit": null,
+        "indent": 0.0,
+        "relativeIndent": 0.0,
+        "justifyLastLine": null,
+        "readingOrder": 0.0
+      },
+      "fill": {
+        "fillType": "solid",
+        "fgColor": {
+          "type": "rgb",
+          "rgb": "FFFFFFFF",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "bgColor": {
+          "type": "indexed",
+          "rgb": null,
+          "indexed": 64,
+          "theme": null,
+          "tint": 0.0
+        }
+      },
+      "border": {
+        "left": {
+          "style": null,
+          "color": null
+        },
+        "right": {
+          "style": null,
+          "color": null
+        },
+        "top": {
+          "style": null,
+          "color": null
+        },
+        "bottom": {
+          "style": null,
+          "color": null
+        },
+        "start": null,
+        "end": null,
+        "diagonal": {
+          "style": null,
+          "color": null
+        },
+        "diagonalUp": false,
+        "diagonalDown": false,
+        "outline": true,
+        "vertical": null,
+        "horizontal": null
+      },
+      "numberFormat": "General",
+      "protection": {
+        "locked": true,
+        "hidden": false
+      }
+    },
+    {
+      "font": {
+        "name": "Arial",
+        "size": 14.0,
+        "bold": true,
+        "italic": false,
+        "underline": null,
+        "strike": null,
+        "color": null,
+        "vertAlign": null,
+        "charset": null,
+        "family": 2.0,
+        "scheme": null,
+        "outline": null,
+        "shadow": null,
+        "condense": null,
+        "extend": null
+      },
+      "alignment": {
+        "horizontal": "center",
+        "vertical": null,
+        "textRotation": 0,
+        "wrapText": null,
+        "shrinkToFit": null,
+        "indent": 0.0,
+        "relativeIndent": 0.0,
+        "justifyLastLine": null,
+        "readingOrder": 0.0
+      },
+      "fill": {
+        "fillType": "solid",
+        "fgColor": {
+          "type": "rgb",
+          "rgb": "FFFFFFFF",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "bgColor": {
+          "type": "indexed",
+          "rgb": null,
+          "indexed": 64,
+          "theme": null,
+          "tint": 0.0
+        }
+      },
+      "border": {
+        "left": {
+          "style": null,
+          "color": null
+        },
+        "right": {
+          "style": null,
+          "color": null
+        },
+        "top": {
+          "style": null,
+          "color": null
+        },
+        "bottom": {
+          "style": null,
+          "color": null
+        },
+        "start": null,
+        "end": null,
+        "diagonal": {
+          "style": null,
+          "color": null
+        },
+        "diagonalUp": false,
+        "diagonalDown": false,
+        "outline": true,
+        "vertical": null,
+        "horizontal": null
+      },
+      "numberFormat": "General",
+      "protection": {
+        "locked": true,
+        "hidden": false
+      }
+    },
+    {
+      "font": {
+        "name": "Arial",
+        "size": 10.0,
+        "bold": false,
+        "italic": false,
+        "underline": null,
+        "strike": null,
+        "color": null,
+        "vertAlign": null,
+        "charset": null,
+        "family": 2.0,
+        "scheme": null,
+        "outline": null,
+        "shadow": null,
+        "condense": null,
+        "extend": null
+      },
+      "alignment": {
+        "horizontal": "center",
+        "vertical": null,
+        "textRotation": 0,
+        "wrapText": null,
+        "shrinkToFit": null,
+        "indent": 0.0,
+        "relativeIndent": 0.0,
+        "justifyLastLine": null,
+        "readingOrder": 0.0
+      },
+      "fill": {
+        "fillType": "solid",
+        "fgColor": {
+          "type": "rgb",
+          "rgb": "FFFFFFFF",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "bgColor": {
+          "type": "indexed",
+          "rgb": null,
+          "indexed": 64,
+          "theme": null,
+          "tint": 0.0
+        }
+      },
+      "border": {
+        "left": {
+          "style": null,
+          "color": null
+        },
+        "right": {
+          "style": null,
+          "color": null
+        },
+        "top": {
+          "style": null,
+          "color": null
+        },
+        "bottom": {
+          "style": null,
+          "color": null
+        },
+        "start": null,
+        "end": null,
+        "diagonal": {
+          "style": null,
+          "color": null
+        },
+        "diagonalUp": false,
+        "diagonalDown": false,
+        "outline": true,
+        "vertical": null,
+        "horizontal": null
+      },
+      "numberFormat": "General",
+      "protection": {
+        "locked": true,
+        "hidden": false
+      }
+    },
+    {
+      "font": {
+        "name": "Arial",
+        "size": 10.0,
+        "bold": true,
+        "italic": true,
+        "underline": null,
+        "strike": null,
+        "color": null,
+        "vertAlign": null,
+        "charset": null,
+        "family": 2.0,
+        "scheme": null,
+        "outline": null,
+        "shadow": null,
+        "condense": null,
+        "extend": null
+      },
+      "alignment": {
+        "horizontal": null,
+        "vertical": null,
+        "textRotation": 0,
+        "wrapText": null,
+        "shrinkToFit": null,
+        "indent": 0.0,
+        "relativeIndent": 0.0,
+        "justifyLastLine": null,
+        "readingOrder": 0.0
+      },
+      "fill": {
+        "fillType": "solid",
+        "fgColor": {
+          "type": "rgb",
+          "rgb": "FFFFFFFF",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "bgColor": {
+          "type": "indexed",
+          "rgb": null,
+          "indexed": 64,
+          "theme": null,
+          "tint": 0.0
+        }
+      },
+      "border": {
+        "left": {
+          "style": null,
+          "color": null
+        },
+        "right": {
+          "style": null,
+          "color": null
+        },
+        "top": {
+          "style": null,
+          "color": null
+        },
+        "bottom": {
+          "style": null,
+          "color": null
+        },
+        "start": null,
+        "end": null,
+        "diagonal": {
+          "style": null,
+          "color": null
+        },
+        "diagonalUp": false,
+        "diagonalDown": false,
+        "outline": true,
+        "vertical": null,
+        "horizontal": null
+      },
+      "numberFormat": "General",
+      "protection": {
+        "locked": true,
+        "hidden": false
+      }
+    },
+    {
+      "font": {
+        "name": "Arial",
+        "size": 10.0,
+        "bold": false,
+        "italic": true,
+        "underline": null,
+        "strike": null,
+        "color": null,
+        "vertAlign": null,
+        "charset": null,
+        "family": 2.0,
+        "scheme": null,
+        "outline": null,
+        "shadow": null,
+        "condense": null,
+        "extend": null
+      },
+      "alignment": {
+        "horizontal": null,
+        "vertical": null,
+        "textRotation": 0,
+        "wrapText": null,
+        "shrinkToFit": null,
+        "indent": 0.0,
+        "relativeIndent": 0.0,
+        "justifyLastLine": null,
+        "readingOrder": 0.0
+      },
+      "fill": {
+        "fillType": "solid",
+        "fgColor": {
+          "type": "rgb",
+          "rgb": "FFFFFFFF",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "bgColor": {
+          "type": "indexed",
+          "rgb": null,
+          "indexed": 64,
+          "theme": null,
+          "tint": 0.0
+        }
+      },
+      "border": {
+        "left": {
+          "style": null,
+          "color": null
+        },
+        "right": {
+          "style": null,
+          "color": null
+        },
+        "top": {
+          "style": null,
+          "color": null
+        },
+        "bottom": {
+          "style": null,
+          "color": null
+        },
+        "start": null,
+        "end": null,
+        "diagonal": {
+          "style": null,
+          "color": null
+        },
+        "diagonalUp": false,
+        "diagonalDown": false,
+        "outline": true,
+        "vertical": null,
+        "horizontal": null
+      },
+      "numberFormat": "General",
+      "protection": {
+        "locked": true,
+        "hidden": false
+      }
+    },
+    {
+      "font": {
+        "name": "Arial",
+        "size": 10.0,
+        "bold": false,
+        "italic": false,
+        "underline": null,
+        "strike": null,
+        "color": null,
+        "vertAlign": null,
+        "charset": null,
+        "family": 2.0,
+        "scheme": null,
+        "outline": null,
+        "shadow": null,
+        "condense": null,
+        "extend": null
+      },
+      "alignment": {
+        "horizontal": null,
+        "vertical": null,
+        "textRotation": 0,
+        "wrapText": null,
+        "shrinkToFit": null,
+        "indent": 0.0,
+        "relativeIndent": 0.0,
+        "justifyLastLine": null,
+        "readingOrder": 0.0
+      },
+      "fill": {
+        "fillType": "solid",
+        "fgColor": {
+          "type": "rgb",
+          "rgb": "FFFFFFFF",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "bgColor": {
+          "type": "indexed",
+          "rgb": null,
+          "indexed": 64,
+          "theme": null,
+          "tint": 0.0
+        }
+      },
+      "border": {
+        "left": {
+          "style": null,
+          "color": null
+        },
+        "right": {
+          "style": null,
+          "color": null
+        },
+        "top": {
+          "style": null,
+          "color": null
+        },
+        "bottom": {
+          "style": null,
+          "color": null
+        },
+        "start": null,
+        "end": null,
+        "diagonal": {
+          "style": null,
+          "color": null
+        },
+        "diagonalUp": false,
+        "diagonalDown": false,
+        "outline": true,
+        "vertical": null,
+        "horizontal": null
+      },
+      "numberFormat": "General",
+      "protection": {
+        "locked": true,
+        "hidden": false
+      }
+    },
+    {
+      "font": {
+        "name": "Arial",
+        "size": 10.0,
+        "bold": false,
+        "italic": false,
+        "underline": null,
+        "strike": null,
+        "color": null,
+        "vertAlign": null,
+        "charset": null,
+        "family": 2.0,
+        "scheme": null,
+        "outline": null,
+        "shadow": null,
+        "condense": null,
+        "extend": null
+      },
+      "alignment": {
+        "horizontal": null,
+        "vertical": null,
+        "textRotation": 0,
+        "wrapText": null,
+        "shrinkToFit": null,
+        "indent": 0.0,
+        "relativeIndent": 0.0,
+        "justifyLastLine": null,
+        "readingOrder": 0.0
+      },
+      "fill": {
+        "fillType": "solid",
+        "fgColor": {
+          "type": "rgb",
+          "rgb": "FFFFFFFF",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "bgColor": {
+          "type": "indexed",
+          "rgb": null,
+          "indexed": 64,
+          "theme": null,
+          "tint": 0.0
+        }
+      },
+      "border": {
+        "left": {
+          "style": null,
+          "color": null
+        },
+        "right": {
+          "style": null,
+          "color": null
+        },
+        "top": {
+          "style": null,
+          "color": null
+        },
+        "bottom": {
+          "style": "thin",
+          "color": {
+            "type": "rgb",
+            "rgb": "FF000000",
+            "indexed": null,
+            "theme": null,
+            "tint": 0.0
+          }
+        },
+        "start": null,
+        "end": null,
+        "diagonal": {
+          "style": null,
+          "color": null
+        },
+        "diagonalUp": false,
+        "diagonalDown": false,
+        "outline": true,
+        "vertical": null,
+        "horizontal": null
+      },
+      "numberFormat": "General",
+      "protection": {
+        "locked": true,
+        "hidden": false
+      }
+    },
+    {
+      "font": {
+        "name": "Arial",
+        "size": 10.0,
+        "bold": false,
+        "italic": false,
+        "underline": "single",
+        "strike": null,
+        "color": null,
+        "vertAlign": null,
+        "charset": null,
+        "family": 2.0,
+        "scheme": null,
+        "outline": null,
+        "shadow": null,
+        "condense": null,
+        "extend": null
+      },
+      "alignment": {
+        "horizontal": null,
+        "vertical": null,
+        "textRotation": 0,
+        "wrapText": null,
+        "shrinkToFit": null,
+        "indent": 0.0,
+        "relativeIndent": 0.0,
+        "justifyLastLine": null,
+        "readingOrder": 0.0
+      },
+      "fill": {
+        "fillType": "solid",
+        "fgColor": {
+          "type": "rgb",
+          "rgb": "FFFFFFFF",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "bgColor": {
+          "type": "indexed",
+          "rgb": null,
+          "indexed": 64,
+          "theme": null,
+          "tint": 0.0
+        }
+      },
+      "border": {
+        "left": {
+          "style": null,
+          "color": null
+        },
+        "right": {
+          "style": null,
+          "color": null
+        },
+        "top": {
+          "style": null,
+          "color": null
+        },
+        "bottom": {
+          "style": null,
+          "color": null
+        },
+        "start": null,
+        "end": null,
+        "diagonal": {
+          "style": null,
+          "color": null
+        },
+        "diagonalUp": false,
+        "diagonalDown": false,
+        "outline": true,
+        "vertical": null,
+        "horizontal": null
+      },
+      "numberFormat": "General",
+      "protection": {
+        "locked": true,
+        "hidden": false
+      }
+    },
+    {
+      "font": {
+        "name": "Arial",
+        "size": 10.0,
+        "bold": true,
+        "italic": false,
+        "underline": null,
+        "strike": null,
+        "color": null,
+        "vertAlign": null,
+        "charset": null,
+        "family": 2.0,
+        "scheme": null,
+        "outline": null,
+        "shadow": null,
+        "condense": null,
+        "extend": null
+      },
+      "alignment": {
+        "horizontal": null,
+        "vertical": null,
+        "textRotation": 0,
+        "wrapText": null,
+        "shrinkToFit": null,
+        "indent": 0.0,
+        "relativeIndent": 0.0,
+        "justifyLastLine": null,
+        "readingOrder": 0.0
+      },
+      "fill": {
+        "fillType": "solid",
+        "fgColor": {
+          "type": "rgb",
+          "rgb": "FFFFFFFF",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "bgColor": {
+          "type": "indexed",
+          "rgb": null,
+          "indexed": 64,
+          "theme": null,
+          "tint": 0.0
+        }
+      },
+      "border": {
+        "left": {
+          "style": null,
+          "color": null
+        },
+        "right": {
+          "style": null,
+          "color": null
+        },
+        "top": {
+          "style": null,
+          "color": null
+        },
+        "bottom": {
+          "style": null,
+          "color": null
+        },
+        "start": null,
+        "end": null,
+        "diagonal": {
+          "style": null,
+          "color": null
+        },
+        "diagonalUp": false,
+        "diagonalDown": false,
+        "outline": true,
+        "vertical": null,
+        "horizontal": null
+      },
+      "numberFormat": "General",
+      "protection": {
+        "locked": true,
+        "hidden": false
+      }
+    },
+    {
+      "font": {
+        "name": "Arial",
+        "size": 10.0,
+        "bold": true,
+        "italic": true,
+        "underline": null,
+        "strike": null,
+        "color": {
+          "type": "rgb",
+          "rgb": "FFFFFFFF",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "vertAlign": null,
+        "charset": null,
+        "family": 2.0,
+        "scheme": null,
+        "outline": null,
+        "shadow": null,
+        "condense": null,
+        "extend": null
+      },
+      "alignment": {
+        "horizontal": null,
+        "vertical": null,
+        "textRotation": 0,
+        "wrapText": null,
+        "shrinkToFit": null,
+        "indent": 0.0,
+        "relativeIndent": 0.0,
+        "justifyLastLine": null,
+        "readingOrder": 0.0
+      },
+      "fill": {
+        "fillType": "solid",
+        "fgColor": {
+          "type": "rgb",
+          "rgb": "FFFFFFFF",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "bgColor": {
+          "type": "indexed",
+          "rgb": null,
+          "indexed": 64,
+          "theme": null,
+          "tint": 0.0
+        }
+      },
+      "border": {
+        "left": {
+          "style": null,
+          "color": null
+        },
+        "right": {
+          "style": null,
+          "color": null
+        },
+        "top": {
+          "style": null,
+          "color": null
+        },
+        "bottom": {
+          "style": null,
+          "color": null
+        },
+        "start": null,
+        "end": null,
+        "diagonal": {
+          "style": null,
+          "color": null
+        },
+        "diagonalUp": false,
+        "diagonalDown": false,
+        "outline": true,
+        "vertical": null,
+        "horizontal": null
+      },
+      "numberFormat": "General",
+      "protection": {
+        "locked": true,
+        "hidden": false
+      }
+    },
+    {
+      "font": {
+        "name": "Arial",
+        "size": 10.0,
+        "bold": false,
+        "italic": false,
+        "underline": null,
+        "strike": null,
+        "color": null,
+        "vertAlign": null,
+        "charset": null,
+        "family": 2.0,
+        "scheme": null,
+        "outline": null,
+        "shadow": null,
+        "condense": null,
+        "extend": null
+      },
+      "alignment": {
+        "horizontal": null,
+        "vertical": null,
+        "textRotation": 0,
+        "wrapText": null,
+        "shrinkToFit": null,
+        "indent": 0.0,
+        "relativeIndent": 0.0,
+        "justifyLastLine": null,
+        "readingOrder": 0.0
+      },
+      "fill": {
+        "fillType": "solid",
+        "fgColor": {
+          "type": "rgb",
+          "rgb": "FFFFFFFF",
+          "indexed": null,
+          "theme": null,
+          "tint": 0.0
+        },
+        "bgColor": {
+          "type": "indexed",
+          "rgb": null,
+          "indexed": 64,
+          "theme": null,
+          "tint": 0.0
+        }
+      },
+      "border": {
+        "left": {
+          "style": null,
+          "color": null
+        },
+        "right": {
+          "style": null,
+          "color": null
+        },
+        "top": {
+          "style": null,
+          "color": null
+        },
+        "bottom": {
+          "style": "double",
+          "color": {
+            "type": "rgb",
+            "rgb": "FF000000",
+            "indexed": null,
+            "theme": null,
+            "tint": 0.0
+          }
+        },
+        "start": null,
+        "end": null,
+        "diagonal": {
+          "style": null,
+          "color": null
+        },
+        "diagonalUp": false,
+        "diagonalDown": false,
+        "outline": true,
+        "vertical": null,
+        "horizontal": null
+      },
+      "numberFormat": "General",
+      "protection": {
+        "locked": true,
+        "hidden": false
+      }
+    }
+  ],
+  "cells": {
+    "A1": 0,
+    "B1": 0,
+    "C1": 0,
+    "D1": 0,
+    "E1": 0,
+    "F1": 0,
+    "G1": 0,
+    "H1": 0,
+    "I1": 0,
+    "J1": 0,
+    "K1": 0,
+    "L1": 0,
+    "A2": 0,
+    "B2": 0,
+    "C2": 0,
+    "D2": 0,
+    "E2": 0,
+    "F2": 0,
+    "G2": 0,
+    "H2": 0,
+    "I2": 0,
+    "J2": 0,
+    "K2": 0,
+    "L2": 0,
+    "A3": 0,
+    "B3": 0,
+    "C3": 0,
+    "D3": 0,
+    "E3": 0,
+    "F3": 0,
+    "G3": 0,
+    "H3": 0,
+    "I3": 0,
+    "J3": 0,
+    "K3": 0,
+    "L3": 0,
+    "A4": 0,
+    "B4": 0,
+    "C4": 0,
+    "D4": 0,
+    "E4": 0,
+    "F4": 0,
+    "G4": 0,
+    "H4": 0,
+    "I4": 0,
+    "J4": 0,
+    "K4": 0,
+    "L4": 0,
+    "A5": 1,
+    "B5": 2,
+    "C5": 0,
+    "D5": 0,
+    "E5": 0,
+    "F5": 0,
+    "G5": 0,
+    "H5": 0,
+    "I5": 0,
+    "J5": 0,
+    "K5": 0,
+    "L5": 0,
+    "A6": 1,
+    "B6": 2,
+    "C6": 2,
+    "D6": 2,
+    "E6": 2,
+    "F6": 2,
+    "G6": 2,
+    "H6": 2,
+    "I6": 2,
+    "J6": 2,
+    "K6": 2,
+    "L6": 2,
+    "A7": 1,
+    "B7": 2,
+    "C7": 0,
+    "D7": 0,
+    "E7": 0,
+    "F7": 0,
+    "G7": 0,
+    "H7": 0,
+    "I7": 0,
+    "J7": 0,
+    "K7": 0,
+    "L7": 0,
+    "A8": 0,
+    "B8": 3,
+    "C8": 0,
+    "D8": 0,
+    "E8": 0,
+    "F8": 0,
+    "G8": 0,
+    "H8": 0,
+    "I8": 0,
+    "J8": 0,
+    "K8": 0,
+    "L8": 0,
+    "A9": 0,
+    "B9": 4,
+    "C9": 0,
+    "D9": 0,
+    "E9": 0,
+    "F9": 0,
+    "G9": 0,
+    "H9": 0,
+    "I9": 0,
+    "J9": 0,
+    "K9": 0,
+    "L9": 0,
+    "A10": 0,
+    "B10": 4,
+    "C10": 0,
+    "D10": 0,
+    "E10": 0,
+    "F10": 0,
+    "G10": 0,
+    "H10": 0,
+    "I10": 0,
+    "J10": 0,
+    "K10": 0,
+    "L10": 0,
+    "A11": 0,
+    "B11": 0,
+    "C11": 0,
+    "D11": 0,
+    "E11": 0,
+    "F11": 0,
+    "G11": 0,
+    "H11": 0,
+    "I11": 0,
+    "J11": 0,
+    "K11": 0,
+    "L11": 0,
+    "A12": 0,
+    "B12": 0,
+    "C12": 0,
+    "D12": 0,
+    "E12": 0,
+    "F12": 0,
+    "G12": 0,
+    "H12": 0,
+    "I12": 0,
+    "J12": 0,
+    "K12": 0,
+    "L12": 0,
+    "A13": 0,
+    "B13": 0,
+    "C13": 5,
+    "D13": 0,
+    "E13": 0,
+    "F13": 0,
+    "G13": 0,
+    "H13": 0,
+    "I13": 5,
+    "J13": 0,
+    "K13": 0,
+    "L13": 0,
+    "A14": 0,
+    "B14": 0,
+    "C14": 5,
+    "D14": 0,
+    "E14": 0,
+    "F14": 0,
+    "G14": 0,
+    "H14": 0,
+    "I14": 5,
+    "J14": 0,
+    "K14": 0,
+    "L14": 0,
+    "A15": 0,
+    "B15": 0,
+    "C15": 0,
+    "D15": 0,
+    "E15": 0,
+    "F15": 0,
+    "G15": 0,
+    "H15": 0,
+    "I15": 0,
+    "J15": 0,
+    "K15": 0,
+    "L15": 0,
+    "A16": 0,
+    "B16": 6,
+    "C16": 6,
+    "D16": 0,
+    "E16": 7,
+    "F16": 0,
+    "G16": 0,
+    "H16": 6,
+    "I16": 6,
+    "J16": 0,
+    "K16": 7,
+    "L16": 0,
+    "A17": 0,
+    "B17": 6,
+    "C17": 6,
+    "D17": 0,
+    "E17": 7,
+    "F17": 0,
+    "G17": 0,
+    "H17": 6,
+    "I17": 6,
+    "J17": 0,
+    "K17": 7,
+    "L17": 0,
+    "A18": 0,
+    "B18": 6,
+    "C18": 0,
+    "D18": 0,
+    "E18": 7,
+    "F18": 0,
+    "G18": 0,
+    "H18": 6,
+    "I18": 6,
+    "J18": 0,
+    "K18": 7,
+    "L18": 0,
+    "A19": 0,
+    "B19": 6,
+    "C19": 6,
+    "D19": 0,
+    "E19": 7,
+    "F19": 0,
+    "G19": 0,
+    "H19": 6,
+    "I19": 6,
+    "J19": 0,
+    "K19": 7,
+    "L19": 0,
+    "A20": 0,
+    "B20": 6,
+    "C20": 6,
+    "D20": 0,
+    "E20": 7,
+    "F20": 0,
+    "G20": 0,
+    "H20": 6,
+    "I20": 6,
+    "J20": 0,
+    "K20": 8,
+    "L20": 0,
+    "A21": 0,
+    "B21": 6,
+    "C21": 6,
+    "D21": 0,
+    "E21": 7,
+    "F21": 0,
+    "G21": 0,
+    "H21": 0,
+    "I21": 0,
+    "J21": 0,
+    "K21": 7,
+    "L21": 0,
+    "A22": 0,
+    "B22": 6,
+    "C22": 6,
+    "D22": 0,
+    "E22": 7,
+    "F22": 0,
+    "G22": 0,
+    "H22": 0,
+    "I22": 0,
+    "J22": 0,
+    "K22": 7,
+    "L22": 0,
+    "A23": 0,
+    "B23": 6,
+    "C23": 6,
+    "D23": 0,
+    "E23": 7,
+    "F23": 0,
+    "G23": 0,
+    "H23": 0,
+    "I23": 5,
+    "J23": 0,
+    "K23": 0,
+    "L23": 0,
+    "A24": 0,
+    "B24": 6,
+    "C24": 6,
+    "D24": 0,
+    "E24": 8,
+    "F24": 0,
+    "G24": 0,
+    "H24": 6,
+    "I24": 6,
+    "J24": 0,
+    "K24": 7,
+    "L24": 0,
+    "A25": 0,
+    "B25": 6,
+    "C25": 6,
+    "D25": 0,
+    "E25": 7,
+    "F25": 0,
+    "G25": 0,
+    "H25": 0,
+    "I25": 0,
+    "J25": 0,
+    "K25": 0,
+    "L25": 0,
+    "A26": 0,
+    "B26": 5,
+    "C26": 0,
+    "D26": 7,
+    "E26": 0,
+    "F26": 7,
+    "G26": 0,
+    "H26": 5,
+    "I26": 0,
+    "J26": 0,
+    "K26": 0,
+    "L26": 7,
+    "A27": 0,
+    "B27": 0,
+    "C27": 0,
+    "D27": 9,
+    "E27": 0,
+    "F27": 0,
+    "G27": 0,
+    "H27": 0,
+    "I27": 0,
+    "J27": 0,
+    "K27": 0,
+    "L27": 7,
+    "A28": 0,
+    "B28": 0,
+    "C28": 5,
+    "D28": 10,
+    "E28": 0,
+    "F28": 0,
+    "G28": 0,
+    "H28": 0,
+    "I28": 5,
+    "J28": 0,
+    "K28": 0,
+    "L28": 0,
+    "A29": 0,
+    "B29": 6,
+    "C29": 0,
+    "D29": 0,
+    "E29": 7,
+    "F29": 7,
+    "G29": 0,
+    "H29": 0,
+    "I29": 5,
+    "J29": 0,
+    "K29": 0,
+    "L29": 0,
+    "A30": 0,
+    "B30": 6,
+    "C30": 0,
+    "D30": 0,
+    "E30": 7,
+    "F30": 0,
+    "G30": 0,
+    "H30": 0,
+    "I30": 5,
+    "J30": 0,
+    "K30": 0,
+    "L30": 0,
+    "A31": 0,
+    "B31": 6,
+    "C31": 0,
+    "D31": 0,
+    "E31": 7,
+    "F31": 0,
+    "G31": 0,
+    "H31": 6,
+    "I31": 0,
+    "J31": 0,
+    "K31": 7,
+    "L31": 0,
+    "A32": 0,
+    "B32": 6,
+    "C32": 0,
+    "D32": 0,
+    "E32": 7,
+    "F32": 0,
+    "G32": 0,
+    "H32": 6,
+    "I32": 0,
+    "J32": 0,
+    "K32": 7,
+    "L32": 0,
+    "A33": 0,
+    "B33": 6,
+    "C33": 0,
+    "D33": 0,
+    "E33": 7,
+    "F33": 0,
+    "G33": 0,
+    "H33": 6,
+    "I33": 0,
+    "J33": 0,
+    "K33": 7,
+    "L33": 0,
+    "A34": 0,
+    "B34": 6,
+    "C34": 0,
+    "D34": 0,
+    "E34": 8,
+    "F34": 0,
+    "G34": 0,
+    "H34": 6,
+    "I34": 0,
+    "J34": 0,
+    "K34": 8,
+    "L34": 0,
+    "A35": 0,
+    "B35": 6,
+    "C35": 0,
+    "D35": 0,
+    "E35": 9,
+    "F35": 0,
+    "G35": 0,
+    "H35": 0,
+    "I35": 0,
+    "J35": 0,
+    "K35": 0,
+    "L35": 0,
+    "A36": 0,
+    "B36": 5,
+    "C36": 0,
+    "D36": 0,
+    "E36": 0,
+    "F36": 7,
+    "G36": 0,
+    "H36": 5,
+    "I36": 0,
+    "J36": 0,
+    "K36": 0,
+    "L36": 7,
+    "A37": 0,
+    "B37": 5,
+    "C37": 0,
+    "D37": 0,
+    "E37": 0,
+    "F37": 7,
+    "G37": 0,
+    "H37": 0,
+    "I37": 0,
+    "J37": 0,
+    "K37": 7,
+    "L37": 0,
+    "A38": 0,
+    "B38": 0,
+    "C38": 11,
+    "D38": 10,
+    "E38": 0,
+    "F38": 7,
+    "G38": 0,
+    "H38": 0,
+    "I38": 0,
+    "J38": 0,
+    "K38": 0,
+    "L38": 0,
+    "A39": 0,
+    "B39": 6,
+    "C39": 0,
+    "D39": 0,
+    "E39": 7,
+    "F39": 7,
+    "G39": 0,
+    "H39": 0,
+    "I39": 0,
+    "J39": 0,
+    "K39": 0,
+    "L39": 0,
+    "A40": 0,
+    "B40": 6,
+    "C40": 0,
+    "D40": 0,
+    "E40": 8,
+    "F40": 7,
+    "G40": 0,
+    "H40": 0,
+    "I40": 0,
+    "J40": 0,
+    "K40": 0,
+    "L40": 0,
+    "A41": 0,
+    "B41": 6,
+    "C41": 0,
+    "D41": 0,
+    "E41": 7,
+    "F41": 7,
+    "G41": 0,
+    "H41": 0,
+    "I41": 0,
+    "J41": 0,
+    "K41": 0,
+    "L41": 0,
+    "A42": 0,
+    "B42": 5,
+    "C42": 0,
+    "D42": 0,
+    "E42": 0,
+    "F42": 8,
+    "G42": 0,
+    "H42": 0,
+    "I42": 0,
+    "J42": 0,
+    "K42": 0,
+    "L42": 0,
+    "A43": 0,
+    "B43": 5,
+    "C43": 0,
+    "D43": 0,
+    "E43": 0,
+    "F43": 7,
+    "G43": 0,
+    "H43": 0,
+    "I43": 0,
+    "J43": 0,
+    "K43": 0,
+    "L43": 0,
+    "A44": 0,
+    "B44": 0,
+    "C44": 0,
+    "D44": 0,
+    "E44": 0,
+    "F44": 0,
+    "G44": 0,
+    "H44": 0,
+    "I44": 0,
+    "J44": 0,
+    "K44": 0,
+    "L44": 0,
+    "A45": 0,
+    "B45": 5,
+    "C45": 5,
+    "D45": 0,
+    "E45": 0,
+    "F45": 12,
+    "G45": 0,
+    "H45": 5,
+    "I45": 0,
+    "J45": 0,
+    "K45": 0,
+    "L45": 12,
+    "A46": 0,
+    "B46": 0,
+    "C46": 0,
+    "D46": 0,
+    "E46": 0,
+    "F46": 0,
+    "G46": 0,
+    "H46": 0,
+    "I46": 0,
+    "J46": 0,
+    "K46": 0,
+    "L46": 0,
+    "A47": 0,
+    "B47": 0,
+    "C47": 0,
+    "D47": 0,
+    "E47": 0,
+    "F47": 0,
+    "G47": 0,
+    "H47": 0,
+    "I47": 7,
+    "J47": 0,
+    "K47": 0,
+    "L47": 7
   }
 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import unittest
 from pathlib import Path
@@ -14,8 +15,19 @@ from src.workbook import ER_LAYOUT, build_er_workbook
 
 ROOT = Path(__file__).resolve().parents[1]
 INPUT = ROOT / "sample-inputs" / "balanza_SME170717GA0_2026_07.xls"
-MANUAL = ROOT / "sample-inputs" / "EEFF_202602_AL_Serv_Prueba.xlsx"
+# This historical workbook is used only for cached-value regression.  Its
+# styles are intentionally never compared or copied into the generated ER.
+CACHED_VALUE_REGRESSION_MANUAL = ROOT / "sample-inputs" / "EEFF_202602_AL_Serv_Prueba.xlsx"
+# This approved SHA-256 reference is the sole visual/geometry source.
+VISUAL_STYLE_REFERENCE = (
+    ROOT
+    / "sample-inputs"
+    / "reference-2026-07-20"
+    / "EEFF_202602_AL_Serv_Prueba.xlsx"
+)
 STYLE_SPEC = ROOT / "src" / "er_style_spec.json"
+VISUAL_STYLE_SHA256 = "991daeaa5b9f957e490e231164825640127cb850f01db865c04cfbb25e72b12c"
+CACHED_VALUE_SHA256 = "d530b541450f6fa9b1bfbece5c8cf4d811b97096884587edfde92156ef4ce0cc"
 SUBTOTAL_ROWS = {20, 25, 51, 53, 58, 63, 65, 70}
 KEY_STYLE_CELLS = (
     "B9", "B10", "B11", "B12", "D15", "F15", "H15", "J15",
@@ -97,9 +109,26 @@ def _style_signature(cell):
 
 
 class ErWorkbookParityTest(unittest.TestCase):
+    def test_cached_value_and_visual_style_references_are_explicitly_separated(self) -> None:
+        self.assertEqual(
+            hashlib.sha256(VISUAL_STYLE_REFERENCE.read_bytes()).hexdigest(), VISUAL_STYLE_SHA256
+        )
+        self.assertEqual(
+            hashlib.sha256(CACHED_VALUE_REGRESSION_MANUAL.read_bytes()).hexdigest(), CACHED_VALUE_SHA256
+        )
+        visual_values = load_workbook(VISUAL_STYLE_REFERENCE, data_only=True, keep_links=True)["ER"]
+        cached_values = load_workbook(
+            CACHED_VALUE_REGRESSION_MANUAL, data_only=True, keep_links=True
+        )["ER"]
+        for coordinate in ("H18", "H46", "H70"):
+            self.assertIsNone(visual_values[coordinate].value, coordinate)
+            self.assertIsNotNone(cached_values[coordinate].value, coordinate)
+
     def test_detail_amounts_match_manual_cached_values_with_cent_tolerance(self) -> None:
         generated = _build_workbook()["ER"]
-        manual = load_workbook(MANUAL, data_only=True, keep_links=True)["ER"]
+        manual = load_workbook(
+            CACHED_VALUE_REGRESSION_MANUAL, data_only=True, keep_links=True
+        )["ER"]
 
         detail_rows = [
             int(spec["row"])
@@ -124,7 +153,7 @@ class ErWorkbookParityTest(unittest.TestCase):
 
     def test_sheet_geometry_matches_manual(self) -> None:
         generated = _build_workbook()["ER"]
-        manual = load_workbook(MANUAL, data_only=False, keep_links=True)["ER"]
+        manual = load_workbook(VISUAL_STYLE_REFERENCE, data_only=False, keep_links=True)["ER"]
 
         self.assertIsNone(generated.freeze_panes)
         self.assertEqual(generated.sheet_format.defaultRowHeight, manual.sheet_format.defaultRowHeight)
@@ -135,26 +164,40 @@ class ErWorkbookParityTest(unittest.TestCase):
             {column: manual.column_dimensions[column].width for column in "ABCDEFGHIJ"},
         )
         self.assertEqual(
-            {row: generated.row_dimensions[row].height for row in range(1, 88)},
-            {row: manual.row_dimensions[row].height for row in range(1, 88)},
+            {row: generated.row_dimensions[row].height for row in range(1, 71)},
+            {row: manual.row_dimensions[row].height for row in range(1, 71)},
         )
         self.assertEqual(
-            [row for row in range(1, 88) if generated.row_dimensions[row].hidden],
-            [row for row in range(1, 88) if manual.row_dimensions[row].hidden],
+            [row for row in range(1, 71) if generated.row_dimensions[row].hidden],
+            [row for row in range(1, 71) if manual.row_dimensions[row].hidden],
+        )
+        manual_merges = {
+            str(value)
+            for value in manual.merged_cells.ranges
+            if value.max_row <= 70 and value.max_col <= 10
+        }
+        self.assertEqual(
+            {str(value) for value in generated.merged_cells.ranges},
+            manual_merges,
         )
         self.assertEqual(
-            sorted(str(value) for value in generated.merged_cells.ranges),
-            sorted(str(value) for value in manual.merged_cells.ranges),
+            {column: generated.column_dimensions[column].hidden for column in "ABCDEFGHIJ"},
+            {column: manual.column_dimensions[column].hidden for column in "ABCDEFGHIJ"},
         )
         self.assertEqual(generated.page_setup.orientation, manual.page_setup.orientation)
+        self.assertEqual(generated.page_setup.paperSize, manual.page_setup.paperSize)
         self.assertEqual(generated.page_setup.horizontalDpi, manual.page_setup.horizontalDpi)
         self.assertEqual(generated.page_setup.verticalDpi, manual.page_setup.verticalDpi)
         for name in ("left", "right", "top", "bottom", "header", "footer"):
             self.assertEqual(getattr(generated.page_margins, name), getattr(manual.page_margins, name))
+        self.assertEqual(generated.print_area, "'ER'!$B$9:$J$70")
+        self.assertEqual(generated.print_title_rows, "$9:$15")
+        self.assertEqual(generated.page_setup.fitToWidth, 1)
+        self.assertEqual(generated.page_setup.fitToHeight, 0)
 
     def test_key_non_fill_styles_match_manual_and_effective_area_is_white(self) -> None:
         generated = _build_workbook()["ER"]
-        manual = load_workbook(MANUAL, data_only=False, keep_links=True)["ER"]
+        manual = load_workbook(VISUAL_STYLE_REFERENCE, data_only=False, keep_links=True)["ER"]
         for coordinate in KEY_STYLE_CELLS:
             with self.subTest(coordinate=coordinate):
                 generated_style = _style_signature(generated[coordinate])
@@ -168,8 +211,9 @@ class ErWorkbookParityTest(unittest.TestCase):
 
     def test_style_spec_is_versioned_and_self_contained(self) -> None:
         spec = json.loads(STYLE_SPEC.read_text(encoding="utf-8"))
-        self.assertEqual(spec["version"], "2026-07-13.manual-er-v1")
-        self.assertEqual(spec["source"], MANUAL.name)
+        self.assertEqual(spec["version"], "2026-07-20.er-v2")
+        self.assertEqual(spec["source"], VISUAL_STYLE_REFERENCE.name)
+        self.assertEqual(spec["source_sha256"], VISUAL_STYLE_SHA256)
         self.assertIn("B9", spec["cells"])
         fonts = {style["font"]["name"] for style in spec["styles"]}
         self.assertEqual(fonts, {"Arial"})
@@ -186,6 +230,20 @@ class ErWorkbookParityTest(unittest.TestCase):
                 for cell in row:
                     if isinstance(cell.value, str):
                         self.assertFalse(any(token in cell.value.upper() for token in tokens), cell.coordinate)
+
+    def test_percentages_use_safe_if_formulas_and_period_columns_stay_without_formulas(self) -> None:
+        worksheet = _build_workbook()["ER"]
+        numeric_rows = [
+            int(spec["row"])
+            for spec in ER_LAYOUT
+            if spec.get("kind") != "section"
+        ]
+        for row in numeric_rows:
+            self.assertEqual(worksheet[f"J{row}"].value, f"=IF($H$18=0,0,H{row}/$H$18)")
+        for row in range(1, 71):
+            for column in ("D", "F"):
+                value = worksheet[f"{column}{row}"].value
+                self.assertFalse(isinstance(value, str) and value.startswith("="), f"{column}{row}")
 
 
 if __name__ == "__main__":

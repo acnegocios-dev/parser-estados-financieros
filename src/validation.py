@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import tempfile
 from typing import Any, Iterable, Mapping
+from xml.etree import ElementTree
 
 from openpyxl import load_workbook
 from openpyxl.workbook.workbook import Workbook
@@ -68,6 +69,17 @@ class FinancialStatementsValidationResult:
     issues: list[str] = field(default_factory=list)
     formula_validation: ValidationResult | None = None
     evidence: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class PrintValidationResult:
+    """Evidence for the serialized print contract and its optional PDF rendering."""
+
+    ok: bool
+    issues: list[str] = field(default_factory=list)
+    pdf_rendered: bool = False
+    pdf_pages: dict[str, int] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -233,6 +245,7 @@ def validate_financial_statements_workbook(
                 workbook["BAL"], expected_company, expected_period, expected_rfc,
                 normalized_rows, issues,
             )
+        _validate_print_contract(workbook, normalized_rows, issues)
         _validate_forbidden_fills(workbook, issues)
 
         evidence = _financial_statements_evidence(bal_dataset, bg_dataset)
@@ -258,6 +271,44 @@ def validate_financial_statements_workbook(
     finally:
         if close_after:
             workbook.close()
+
+
+def validate_print_contract_after_roundtrip(
+    workbook_path: str | Path,
+    *,
+    normalized_rows: int,
+) -> PrintValidationResult:
+    """Validate print metadata after saving and reopening an XLSX file.
+
+    The XLSX itself remains the deliverable.  When LibreOffice is installed a
+    throw-away PDF is also converted to page images and inspected as visual
+    evidence; neither the PDF nor its images are retained in the repository.
+    """
+
+    source = Path(workbook_path)
+    if not source.is_file():
+        return PrintValidationResult(ok=False, issues=[f"Workbook does not exist: {source}"])
+
+    issues: list[str] = []
+    workbook = load_workbook(source)
+    try:
+        _validate_print_contract(workbook, normalized_rows, issues)
+    finally:
+        workbook.close()
+
+    result = PrintValidationResult(ok=not issues, issues=issues)
+    executable = shutil.which("libreoffice") or shutil.which("soffice")
+    if executable is None:
+        result.warnings.append("PDF print evidence skipped: libreoffice/soffice is unavailable.")
+        return result
+
+    pdf_issues, page_counts, warnings = _validate_pdf_print_evidence(source, executable)
+    result.pdf_rendered = True
+    result.pdf_pages = page_counts
+    result.warnings.extend(warnings)
+    result.issues.extend(pdf_issues)
+    result.ok = not result.issues
+    return result
 
 
 def _validate_white_sheet(
@@ -309,12 +360,20 @@ def _validate_bg_contract(ws, company: str | None, period: str | None, issues: l
         issues.append("BG company title was not derived from the loaded input.")
     if period and ws["B9"].value != _bg_period_label(period):
         issues.append("BG period title was not derived from the loaded input.")
-    for coordinate, formula in (("L23", "=ER!H70"), ("F45", "=SUM(F13:F26)"), ("L45", "=SUM(L13:L17,L20:L23)"), ("L47", "=F45-L45")):
+    formulas = (
+        ("F26", "=SUM(E16:E24)"),
+        ("F36", "=SUM(E29:E34)"),
+        ("F42", "=SUM(E39:E40)"),
+        ("F45", "=F26+F36+F42"),
+        ("L26", "=SUM(K16:K20)"),
+        ("K34", "=ER!H70"),
+        ("L36", "=SUM(K31:K34)"),
+        ("L45", "=L26+L36"),
+        ("L47", "=F45-L45"),
+    )
+    for coordinate, formula in formulas:
         if ws[coordinate].value != formula:
             issues.append(f"BG!{coordinate} must use {formula}.")
-    for coordinate in ("F45", "L45", "L47"):
-        if ws[coordinate].number_format == "General":
-            issues.append(f"BG!{coordinate} is missing a monetary number format.")
 
 
 def _validate_bal_contract(
@@ -330,7 +389,7 @@ def _validate_bal_contract(
         issues.append("BAL title merges do not match the versioned contract.")
     if company and ws["C1"].value != company:
         issues.append("BAL company title was not derived from the loaded input.")
-    if ws["C2"].value != "Balanza de Comprobacion":
+    if ws["C2"].value != "Balanza de Comprobaci\u00f3n":
         issues.append("BAL title is missing.")
     if period and ws["C3"].value != _bal_period_label(period):
         issues.append("BAL period title was not derived from the loaded input.")
@@ -353,27 +412,220 @@ def _validate_bal_contract(
                 issues.append(f"BAL!{coordinate} must be a formula.")
     if ws.freeze_panes is not None:
         issues.append("BAL must not retain the manual freeze pane residue.")
-    expected_widths = {"C": 31.33203125, "D": 17.33203125, "E": 13, "F": 13, "G": 13}
+    expected_widths = {"C": 28.46, "D": 15.7, "E": 13, "F": 13, "G": 13}
     for column, width in expected_widths.items():
         if ws.column_dimensions[column].width != width:
             issues.append(f"BAL column {column} width differs from the versioned contract.")
-    expected_heights = {1: 13.8, 2: 15, 3: 17.4, 4: 15, 5: 17.4}
+    expected_heights = {1: 13.5, 2: 15, 3: 17.25, 4: 15, 5: 17.25}
     for row, height in expected_heights.items():
         if ws.row_dimensions[row].height != height:
             issues.append(f"BAL row {row} height differs from the versioned contract.")
     if ws.page_setup.orientation != "portrait":
         issues.append("BAL must use portrait orientation.")
-    for name, expected in (("left", 0.7086614), ("right", 0.7086614), ("top", 0.7480315), ("bottom", 0.7480315)):
+    for name, expected in (("left", 0.75), ("right", 0.75), ("top", 0.75), ("bottom", 0.75)):
         if getattr(ws.page_margins, name) != expected:
             issues.append(f"BAL {name} margin differs from the versioned contract.")
-    if ws["C6"].border.left.style != "hair" or ws["E7"].number_format == "General":
-        issues.append("BAL borders or monetary formats are missing.")
+    if ws["C6"].border.left.style != "hair":
+        issues.append("BAL hair borders are missing.")
+    if ws["E7"].number_format != "General":
+        issues.append("BAL numeric format differs from the approved manual.")
     for row in ws.iter_rows():
         for cell in row:
             if cell.column < 3 or cell.column > 7:
                 if cell.value is not None:
                     issues.append(f"BAL contains data outside C:G at {cell.coordinate}.")
                     return
+
+
+def _validate_print_contract(
+    workbook: Workbook,
+    normalized_rows: int | None,
+    issues: list[str],
+) -> None:
+    expected = {
+        "BG": ("'BG'!$B$7:$L$47", "$7:$10"),
+        "ER": ("'ER'!$B$9:$J$70", "$9:$15"),
+    }
+    if normalized_rows is not None:
+        sum_row = normalized_rows + 8
+        expected["BAL"] = ("'BAL'!$C$1:$G$" + str(sum_row), "$1:$6")
+
+    for sheet_name, (print_area, title_rows) in expected.items():
+        if sheet_name not in workbook.sheetnames:
+            continue
+        ws = workbook[sheet_name]
+        if ws.print_area != print_area:
+            issues.append(f"{sheet_name} print area differs from the approved contract.")
+        if ws.print_title_rows != title_rows:
+            issues.append(f"{sheet_name} repeated print titles are missing.")
+        if ws.page_setup.fitToWidth != 1 or ws.page_setup.fitToHeight != 0:
+            issues.append(f"{sheet_name} must fit to one page wide.")
+        page_setup_properties = ws.sheet_properties.pageSetUpPr
+        if not page_setup_properties or page_setup_properties.fitToPage is not True:
+            issues.append(f"{sheet_name} fit-to-page mode is not enabled.")
+        if ws.page_setup.orientation != "portrait":
+            issues.append(f"{sheet_name} must use portrait orientation.")
+        if ws.page_setup.paperSize != 9:
+            issues.append(f"{sheet_name} must use A4 paper.")
+        for name, expected_margin in _VERSIONED_PRINT_MARGINS.items():
+            if getattr(ws.page_margins, name) != expected_margin:
+                issues.append(
+                    f"{sheet_name} {name} margin differs from the versioned contract."
+                )
+
+
+_VERSIONED_PRINT_MARGINS = {
+    "left": 0.75,
+    "right": 0.75,
+    "top": 0.75,
+    "bottom": 0.75,
+    "header": 0.25,
+    "footer": 0.25,
+}
+
+
+def _validate_pdf_print_evidence(
+    source: Path,
+    executable: str,
+) -> tuple[list[str], dict[str, int], list[str]]:
+    """Render every temporary PDF page and check repeatable print evidence."""
+
+    issues: list[str] = []
+    warnings: list[str] = []
+    page_counts: dict[str, int] = {}
+    render_executable = shutil.which("pdftoppm") or shutil.which("pdftocairo")
+    text_executable = shutil.which("pdftotext")
+    if render_executable is None:
+        return ["PDF print evidence cannot render pages: Poppler is unavailable."], page_counts, warnings
+    if text_executable is None:
+        return ["PDF print evidence cannot inspect repeated text: pdftotext is unavailable."], page_counts, warnings
+
+    required_text = {
+        "BG": ("Balance General", "ACTIVO", "PASIVO"),
+        "ER": ("Estado de Resultados", "I N G R E S O S"),
+        "BAL": ("Balanza de Comprobaci", "CUENTA", "SALDO"),
+    }
+    with tempfile.TemporaryDirectory(prefix="estados_financieros_print_") as directory:
+        workdir = Path(directory)
+        pdf_dir = workdir / "pdf"
+        pdf_dir.mkdir()
+        converted = subprocess.run(
+            [executable, "--headless", "--convert-to", "pdf", "--outdir", str(pdf_dir), str(source)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
+        )
+        pdf_path = pdf_dir / f"{source.stem}.pdf"
+        if converted.returncode != 0 or not pdf_path.is_file():
+            detail = converted.stderr.strip() or converted.stdout.strip()
+            return ["LibreOffice failed to create temporary PDF print evidence." + (f" {detail}" if detail else "")], page_counts, warnings
+
+        # LibreOffice exports one PDF containing the workbook sheets in order.
+        info = subprocess.run(
+            [text_executable, "-bbox-layout", str(pdf_path), "-"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+        if info.returncode != 0:
+            return ["pdftotext failed while inspecting temporary PDF evidence."], page_counts, warnings
+        try:
+            document = ElementTree.fromstring(info.stdout)
+        except ElementTree.ParseError:
+            return ["Temporary PDF text geometry could not be parsed."], page_counts, warnings
+
+        pages = [element for element in document.iter() if element.tag.endswith("page")]
+        if not pages:
+            return ["Temporary PDF has no renderable pages."], page_counts, warnings
+        page_texts = [_pdf_page_text(page) for page in pages]
+        sheet_page_groups = _split_pdf_pages_by_sheet(page_texts, required_text)
+        assigned_pages = {page_index for group in sheet_page_groups.values() for page_index in group}
+        for page_index in set(range(len(pages))) - assigned_pages:
+            issues.append(
+                f"PDF page {page_index + 1} does not contain a repeated sheet title and header."
+            )
+        for sheet_name, group in sheet_page_groups.items():
+            page_counts[sheet_name] = len(group)
+            if not group:
+                issues.append(f"Temporary PDF has no identifiable {sheet_name} page.")
+                continue
+            for index, page_index in enumerate(group, start=1):
+                text = page_texts[page_index]
+                missing = [token for token in required_text[sheet_name] if token not in text]
+                if missing:
+                    issues.append(
+                        f"{sheet_name} PDF page {index} is missing repeated title/header text: {', '.join(missing)}."
+                    )
+
+        for page_index, page in enumerate(pages, start=1):
+            width = float(page.attrib.get("width", "0"))
+            height = float(page.attrib.get("height", "0"))
+            if width <= 0 or height <= 0 or width >= height:
+                issues.append(f"PDF page {page_index} is not portrait A4 evidence.")
+            elif abs(width - 595.28) > 2 or abs(height - 841.89) > 2:
+                issues.append(f"PDF page {page_index} is not A4-sized evidence.")
+            _validate_pdf_text_geometry(page, page_index, issues)
+
+        for page_index in range(1, len(pages) + 1):
+            output_prefix = workdir / f"page-{page_index}"
+            command = [render_executable, "-png", "-r", "144", "-f", str(page_index), "-l", str(page_index)]
+            if Path(render_executable).name == "pdftocairo":
+                command.extend([str(pdf_path), str(output_prefix)])
+            else:
+                command.extend([str(pdf_path), str(output_prefix)])
+            rendered = subprocess.run(command, capture_output=True, text=True, timeout=60, check=False)
+            if rendered.returncode != 0 or not list(workdir.glob(f"{output_prefix.name}*.png")):
+                issues.append(f"Temporary PDF page {page_index} could not be rendered to an image.")
+    return issues, page_counts, warnings
+
+
+def _pdf_page_text(page: ElementTree.Element) -> str:
+    return " ".join((word.text or "") for word in page.iter() if word.tag.endswith("word"))
+
+
+def _split_pdf_pages_by_sheet(
+    page_texts: list[str],
+    required_text: Mapping[str, tuple[str, ...]],
+) -> dict[str, list[int]]:
+    """Assign pages to workbook sheets by their repeated title text."""
+
+    groups = {sheet_name: [] for sheet_name in required_text}
+    current_sheet: str | None = None
+    for index, text in enumerate(page_texts):
+        matches = [
+            sheet_name
+            for sheet_name, tokens in required_text.items()
+            if tokens[0] in text
+        ]
+        if matches:
+            current_sheet = matches[0]
+        if current_sheet is None:
+            continue
+        groups[current_sheet].append(index)
+    return groups
+
+
+def _validate_pdf_text_geometry(page: ElementTree.Element, page_index: int, issues: list[str]) -> None:
+    """Reject text outside page bounds or duplicate word boxes (overlap evidence)."""
+
+    page_width = float(page.attrib.get("width", "0"))
+    page_height = float(page.attrib.get("height", "0"))
+    seen_boxes: set[tuple[float, float, float, float, str]] = set()
+    for word in (element for element in page.iter() if element.tag.endswith("word")):
+        try:
+            box = tuple(round(float(word.attrib[key]), 2) for key in ("xMin", "yMin", "xMax", "yMax"))
+        except (KeyError, ValueError):
+            continue
+        if box[0] < 0 or box[1] < 0 or box[2] > page_width or box[3] > page_height:
+            issues.append(f"PDF page {page_index} has text cut outside its page bounds.")
+            return
+        key = (*box, word.text or "")
+        if key in seen_boxes:
+            issues.append(f"PDF page {page_index} has overlapping duplicate text.")
+            return
+        seen_boxes.add(key)
 
 
 def _validate_forbidden_fills(workbook: Workbook, issues: list[str]) -> None:

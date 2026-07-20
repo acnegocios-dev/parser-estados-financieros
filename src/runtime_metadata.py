@@ -12,7 +12,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SERVICE_VERSION = "estados-financieros-api-2026-07-16"
+SERVICE_VERSION = "estados-financieros-api-2026-07-20"
 PROCESS_STARTED_AT = datetime.now(timezone.utc).isoformat()
 
 
@@ -30,7 +30,7 @@ def _generator_profile() -> tuple[str, str]:
     versions = [str(spec.get("version") or "unknown") for spec in specs]
     if any(version == "unknown" for version in versions):
         return "manual-eeff-three-sheet", "unknown"
-    return "manual-eeff-three-sheet", "2026-07-16.three-sheet-v1"
+    return "manual-eeff-three-sheet", "2026-07-20.exact-style-print-v2"
 
 
 def _git_value(*args: str) -> str:

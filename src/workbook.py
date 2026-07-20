@@ -1,8 +1,4 @@
-"""Workbook generation for the local financial statements prototype.
-
-This module owns the generated ER sheet only. It accepts loose dict/dataclass
-inputs so it can be wired to parser and ER-dataset modules created elsewhere.
-"""
+"""Self-contained BG, ER and BAL workbook generation for the financial module."""
 
 from __future__ import annotations
 
@@ -18,6 +14,7 @@ from typing import Any, Iterable, Mapping
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Border, Color, Font, PatternFill, Protection, Side
 from openpyxl.utils import get_column_letter
+from openpyxl.utils.cell import coordinate_to_tuple
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "sample-outputs"
 ER_STYLE_SPEC_PATH = Path(__file__).with_name("er_style_spec.json")
@@ -214,47 +211,97 @@ def _write_bg_sheet(
     formula_cells: list[str],
 ) -> None:
     spec = _load_style_spec(BG_STYLE_SPEC_PATH)
-    _apply_sheet_geometry(ws, spec["geometry"])
-    for merged_range in ("B7:L7", "B8:L8", "B9:L9", "B10:L10"):
-        ws.merge_cells(merged_range)
     ws["B7"] = company
     ws["B8"] = "Balance General"
     ws["B9"] = _bg_period_caption(period)
     ws["B10"] = "(Importes expresados en pesos)"
 
-    lines = {str(line.get("key")): line for line in _coerce_list_of_dicts(_read_field(dataset, ("lines",)))}
-    asset_keys = (
-        "caja_chica", "bancos", "inversiones_y_valores", "cuentas_por_cobrar", "contribuciones",
-        "inventarios", "deudores_diversos", "anticipo_a_proveedores", "pagos_anticipados",
-        "mobiliario_y_equipo", "equipo_de_computo", "equipo_de_transporte", "maquinaria_y_equipo",
-        "depreciacion_acumulada",
+    ws["C13"] = "  A C T I V O"
+    ws["C14"] = "C I R C U L A N T E"
+    ws["I13"] = "  P A S I V O"
+    ws["I14"] = "C I R C U L A N T E"
+    ws["C28"] = "NO CIRCULANTE"
+    ws["I29"] = "C A P I T A L"
+    ws["I30"] = "C O N T A B L E"
+    ws["C38"] = "OTROS ACTIVOS"
+
+    lines = {
+        str(line.get("key")): line
+        for line in _coerce_list_of_dicts(_read_field(dataset, ("lines",)))
+    }
+    asset_layout = (
+        ("caja_chica", "Caja Chica", "B16", "E16"),
+        ("bancos", "Bancos", "B17", "E17"),
+        ("inversiones_y_valores", "Inversiones y Valores", "B18", "E18"),
+        ("cuentas_por_cobrar", "Cuentas por Cobrar", "B19", "E19"),
+        ("contribuciones", "Contribuciones", "B20", "E20"),
+        ("inventarios", "Inventarios", "B21", "E21"),
+        ("deudores_diversos", "Deudores Diversos", "B22", "E22"),
+        ("anticipo_a_proveedores", "Anticipo a Proveedores", "B23", "E23"),
+        ("pagos_anticipados", "Pagos anticipados", "B24", "E24"),
+        (None, "Herramientas", "B29", "E29"),
+        ("mobiliario_y_equipo", "Mobiliario y Equipo", "B30", "E30"),
+        ("equipo_de_computo", "Equipo de C\u00f3mputo", "B31", "E31"),
+        ("equipo_de_transporte", "Equipo de transporte", "B32", "E32"),
+        ("maquinaria_y_equipo", "Maquinaria y Equipo", "B33", "E33"),
+        ("depreciacion_acumulada", "Depreciacion acumulada de activos", "B34", "E34"),
+        (None, "Dep\u00f3sitos en Garant\u00eda", "B39", "E39"),
+        (None, "Pagos Anticipados", "B40", "E40"),
     )
-    liability_keys = ("proveedores", "acreedores_diversos", "anticipos_de_clientes", "impuestos_por_pagar", "otros_pasivos_ptu")
-    capital_keys = ("capital_social", "aportaciones_para_aumentos_de_capital", "resultados_de_ejercicios_anteriores")
-    _write_bg_lines(ws, asset_keys, lines, label_column="B", amount_column="F", start_row=13)
-    _write_bg_lines(ws, liability_keys, lines, label_column="H", amount_column="L", start_row=13)
-    _write_bg_lines(ws, capital_keys, lines, label_column="H", amount_column="L", start_row=20)
-    ws["H23"] = "Resultado del ejercicio"
-    ws["L23"] = "=ER!H70"
-    formula_cells.append("BG!L23")
-    ws["B45"] = "TOTAL ACTIVO"
-    ws["F45"] = "=SUM(F13:F26)"
-    ws["H45"] = "TOTAL PASIVO Y CAPITAL"
-    ws["L45"] = "=SUM(L13:L17,L20:L23)"
+    liability_layout = (
+        ("proveedores", "Proveedores", "H16", "K16"),
+        ("acreedores_diversos", "Acreedores Diversos", "H17", "K17"),
+        ("anticipos_de_clientes", "Anticipos de Clientes", "H18", "K18"),
+        ("impuestos_por_pagar", "Impuestos por Pagar", "H19", "K19"),
+        ("otros_pasivos_ptu", "Otros Pasivos PTU", "H20", "K20"),
+        ("capital_social", "Capital Social", "H31", "K31"),
+        (
+            "aportaciones_para_aumentos_de_capital",
+            "Aportaciones para aumentos de Capital",
+            "H32",
+            "K32",
+        ),
+        (
+            "resultados_de_ejercicios_anteriores",
+            "Resultados de Ejercicios Ant.",
+            "H33",
+            "K33",
+        ),
+    )
+    for key, label, label_cell, amount_cell in asset_layout + liability_layout:
+        ws[label_cell] = label
+        ws[amount_cell] = lines.get(key, {}).get("amount", 0) if key else 0
+
+    ws["B26"] = "TOTAL CIRCULANTE"
+    ws["F26"] = "=SUM(E16:E24)"
+    ws["B36"] = "TOTAL NO CIRCULANTE"
+    ws["F36"] = "=SUM(E29:E34)"
+    ws["B42"] = "TOTAL OTROS ACTIVOS"
+    ws["F42"] = "=SUM(E39:E40)"
+    ws["B45"] = "TOTAL DEL ACTIVO"
+    ws["F45"] = "=F26+F36+F42"
+
+    ws["H26"] = "TOTAL PASIVO"
+    ws["L26"] = "=SUM(K16:K20)"
+    ws["H34"] = "Resultado del Ejercicio"
+    ws["K34"] = "=ER!H70"
+    ws["H36"] = "TOTAL CAPITAL CONTABLE"
+    ws["L36"] = "=SUM(K31:K34)"
+    ws["H45"] = "TOTAL PASIVO+CAPITAL CONTABLE"
+    ws["L45"] = "=L26+L36"
     ws["H47"] = "CUADRE"
     ws["L47"] = "=F45-L45"
-    formula_cells.extend(("BG!F45", "BG!L45", "BG!L47"))
-    _apply_bg_presentation(ws)
-    _apply_white_area(ws, min_row=1, max_row=47, min_col=1, max_col=12)
-    ws.sheet_view.showGridLines = False
+    formula_cells.extend(
+        (
+            "BG!F26", "BG!F36", "BG!F42", "BG!F45", "BG!L26",
+            "BG!K34", "BG!L36", "BG!L45", "BG!L47",
+        )
+    )
 
-
-def _write_bg_lines(ws, keys, lines, *, label_column: str, amount_column: str, start_row: int) -> None:
-    for offset, key in enumerate(keys):
-        row = start_row + offset
-        line = lines.get(key, {})
-        ws[f"{label_column}{row}"] = line.get("label", key.replace("_", " ").title())
-        ws[f"{amount_column}{row}"] = line.get("amount", 0)
+    _apply_versioned_sheet_presentation(
+        ws, spec, white_bounds=(1, 47, 1, 12)
+    )
+    _configure_print_layout(ws, print_area="B7:L47", title_rows="7:10")
 
 
 def _write_bal_sheet(
@@ -266,12 +313,9 @@ def _write_bal_sheet(
     formula_cells: list[str],
 ) -> None:
     spec = _load_style_spec(BAL_STYLE_SPEC_PATH)
-    _apply_sheet_geometry(ws, spec["geometry"])
-    for merged_range in ("C1:G1", "C2:G2", "C3:G3", "C4:G4"):
-        ws.merge_cells(merged_range)
     rfc = _read_field(metadata, ("rfc",)) or "RFC por confirmar"
     ws["C1"] = company
-    ws["C2"] = "Balanza de Comprobacion"
+    ws["C2"] = "Balanza de Comprobaci\u00f3n"
     ws["C3"] = _bal_period_caption(period)
     ws["C4"] = f"RFC: {rfc}"
     headers = ("CUENTA", "SALDO INICIAL", "DEBE", "HABER", "SALDO FINAL")
@@ -299,9 +343,12 @@ def _write_bal_sheet(
         formula_cells.append(f"BAL!{get_column_letter(column)}{sum_row}")
     ws.cell(sum_row, 7, f"=D{sum_row}+E{sum_row}-F{sum_row}")
     formula_cells.append(f"BAL!G{sum_row}")
-    ws.print_area = f"C1:G{sum_row}"
-    ws.freeze_panes = None  # The manual A137 pane is a historical residue.
-    _apply_bal_presentation(ws, sum_row)
+
+    _apply_bal_presentation(ws, rows, separator_row, sum_row, spec)
+    ws.freeze_panes = None
+    _configure_print_layout(
+        ws, print_area=f"C1:G{sum_row}", title_rows="1:6"
+    )
 
 
 def _sum_accumulator_formula(column: str, rows: list[int]) -> str:
@@ -310,38 +357,66 @@ def _sum_accumulator_formula(column: str, rows: list[int]) -> str:
     return "=SUM(" + ",".join(f"{column}{row}" for row in rows) + ")"
 
 
-def _apply_bg_presentation(ws) -> None:
-    money = '#,##0.00;[Red]\\-#,##0.00'
-    for row in range(7, 48):
-        for column in range(2, 13):
-            cell = ws.cell(row, column)
-            cell.font = Font(name="Arial", size=8)
-            cell.alignment = Alignment(vertical="center")
-    for coordinate in ("B7", "B8", "B9", "B10"):
-        ws[coordinate].font = Font(name="Arial", size=10, bold=True)
-        ws[coordinate].alignment = Alignment(horizontal="center", vertical="center")
-    for coordinate in ("F45", "L45", "L47"):
-        ws[coordinate].font = Font(name="Arial", size=8, bold=True)
-    for column in ("F", "L"):
-        for row in range(13, 48):
-            ws[f"{column}{row}"].number_format = money
-            ws[f"{column}{row}"].alignment = Alignment(horizontal="right")
+def _apply_bal_presentation(
+    ws,
+    rows: list[dict[str, Any]],
+    separator_row: int,
+    sum_row: int,
+    spec: Mapping[str, Any],
+) -> None:
+    _apply_sheet_geometry(ws, spec["geometry"])
+    for coordinate, style_id in spec["cells"].items():
+        row, _ = coordinate_to_tuple(coordinate)
+        if row <= 6:
+            _apply_style(ws[coordinate], spec["styles"][style_id])
+
+    profiles = spec["dynamic_profiles"]
+    for index, row_data in enumerate(rows, start=7):
+        band = "light" if (index - 7) % 2 == 0 else "dark"
+        weight = "bold" if row_data.get("is_accumulator") else "regular"
+        profile = profiles[f"{band}_{weight}"]
+        _apply_style(ws.cell(index, 3), spec["styles"][profile["label"]])
+        for column in range(4, 8):
+            _apply_style(ws.cell(index, column), spec["styles"][profile["numeric"]])
+
+    for target_row, profile_name in (
+        (separator_row, "separator"),
+        (sum_row, "total"),
+    ):
+        profile = profiles[profile_name]
+        _apply_style(ws.cell(target_row, 3), spec["styles"][profile["label"]])
+        for column in range(4, 8):
+            _apply_style(ws.cell(target_row, column), spec["styles"][profile["numeric"]])
 
 
-def _apply_bal_presentation(ws, sum_row: int) -> None:
-    money = '"$"#,##0.00;[Red]\\-"$"#,##0.00'
-    thin = Side(style="hair", color="FF000000")
-    for row in range(1, sum_row + 1):
-        for column in range(3, 8):
-            cell = ws.cell(row, column)
-            cell.font = Font(name="Arial", size=7, bold=row in (6, sum_row))
-            cell.border = Border(left=thin, right=thin, top=thin, bottom=thin)
-            if column >= 4:
-                cell.number_format = money
-                cell.alignment = Alignment(horizontal="right")
-    for coordinate in ("C1", "C2", "C3", "C4"):
-        ws[coordinate].font = Font(name="Arial", size=9, bold=True)
-        ws[coordinate].alignment = Alignment(horizontal="center")
+def _apply_versioned_sheet_presentation(
+    ws,
+    spec: Mapping[str, Any],
+    *,
+    white_bounds: tuple[int, int, int, int] | None = None,
+) -> None:
+    _apply_sheet_geometry(ws, spec["geometry"])
+    for coordinate, style_id in spec["cells"].items():
+        _apply_style(ws[coordinate], spec["styles"][style_id])
+    if white_bounds:
+        min_row, max_row, min_col, max_col = white_bounds
+        _apply_white_area(
+            ws,
+            min_row=min_row,
+            max_row=max_row,
+            min_col=min_col,
+            max_col=max_col,
+        )
+        ws.sheet_view.showGridLines = False
+
+
+def _configure_print_layout(ws, *, print_area: str, title_rows: str) -> None:
+    ws.print_area = print_area
+    ws.print_title_rows = title_rows
+    ws.sheet_properties.pageSetUpPr.fitToPage = True
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+    ws.page_setup.scale = None
 
 
 def _apply_white_area(ws, *, min_row: int, max_row: int, min_col: int, max_col: int) -> None:
@@ -352,18 +427,35 @@ def _apply_white_area(ws, *, min_row: int, max_row: int, min_col: int, max_col: 
 
 
 def _apply_sheet_geometry(ws, geometry: Mapping[str, Any]) -> None:
-    ws.sheet_format.defaultRowHeight = geometry.get("default_row_height", 13.2)
-    ws.sheet_format.defaultColWidth = geometry.get("default_column_width", 10)
-    ws.sheet_format.baseColWidth = geometry.get("base_column_width", 10)
+    ws.sheet_format.defaultRowHeight = geometry.get("default_row_height")
+    ws.sheet_format.defaultColWidth = geometry.get("default_column_width")
+    ws.sheet_format.baseColWidth = geometry.get("base_column_width")
     for column, width in geometry.get("column_widths", {}).items():
         ws.column_dimensions[column].width = width
+        ws.column_dimensions[column].hidden = column in geometry.get("hidden_columns", [])
     for row, height in geometry.get("row_heights", {}).items():
         ws.row_dimensions[int(row)].height = height
-    margins = geometry.get("page_margins", {})
-    for name, value in margins.items():
+    for row in geometry.get("hidden_rows", []):
+        ws.row_dimensions[int(row)].hidden = True
+    existing_merges = {str(item) for item in ws.merged_cells.ranges}
+    for merged_range in geometry.get("merged_ranges", []):
+        if merged_range not in existing_merges:
+            ws.merge_cells(merged_range)
+    for name, value in geometry.get("page_margins", {}).items():
         setattr(ws.page_margins, name, value)
-    if geometry.get("page_setup", {}).get("orientation"):
-        ws.page_setup.orientation = geometry["page_setup"]["orientation"]
+    for name, value in geometry.get("page_setup", {}).items():
+        if value is not None:
+            setattr(ws.page_setup, name, value)
+    for name, value in geometry.get("page_setup_properties", {}).items():
+        if value is not None:
+            setattr(ws.sheet_properties.pageSetUpPr, name, value)
+    for name, value in geometry.get("print_options", {}).items():
+        if value is not None:
+            setattr(ws.print_options, name, value)
+    for name, value in geometry.get("sheet_view", {}).items():
+        if value is not None:
+            setattr(ws.sheet_view, name, value)
+    ws.freeze_panes = geometry.get("freeze_panes")
 
 
 def _load_style_spec(path: Path) -> dict[str, Any]:
@@ -520,41 +612,13 @@ def _sanitize_formula(formula: str) -> str:
 
 
 def _style_er_sheet(ws) -> None:
-    """Apply the versioned visual contract extracted from the manual ER."""
+    """Apply the exact non-fill ER contract and the required white canvas."""
 
     spec = _load_er_style_spec()
-    geometry = spec["geometry"]
-
-    ws.sheet_format.defaultRowHeight = geometry["default_row_height"]
-    ws.sheet_format.defaultColWidth = geometry["default_column_width"]
-    ws.sheet_format.baseColWidth = geometry["base_column_width"]
-    for column, width in geometry["column_widths"].items():
-        ws.column_dimensions[column].width = width
-
-    for row in range(1, 88):
-        ws.row_dimensions[row].height = None
-        ws.row_dimensions[row].hidden = False
-    for row, height in geometry["row_heights"].items():
-        ws.row_dimensions[int(row)].height = height
-    for row in geometry["hidden_rows"]:
-        ws.row_dimensions[int(row)].hidden = True
-
-    for merged_range in geometry["merged_ranges"]:
-        ws.merge_cells(merged_range)
-
-    for name, value in geometry["page_margins"].items():
-        setattr(ws.page_margins, name, value)
-    for name, value in geometry["page_setup"].items():
-        setattr(ws.page_setup, name, value)
-    ws.sheet_view.showGridLines = geometry["show_grid_lines"]
-    ws.sheet_view.topLeftCell = geometry["top_left_cell"]
-    ws.freeze_panes = geometry["freeze_panes"]
-
-    for coordinate, style_id in spec["cells"].items():
-        cell = ws[coordinate]
-        _apply_style(cell, spec["styles"][style_id])
-    _apply_white_area(ws, min_row=1, max_row=70, min_col=1, max_col=10)
-    ws.sheet_view.showGridLines = False
+    _apply_versioned_sheet_presentation(
+        ws, spec, white_bounds=(1, 70, 1, 10)
+    )
+    _configure_print_layout(ws, print_area="B9:J70", title_rows="9:15")
 
 
 def _load_er_style_spec() -> dict[str, Any]:
@@ -621,6 +685,8 @@ def _apply_style(cell: Any, spec: dict[str, Any]) -> None:
         right=_side_from_spec(border["right"]),
         top=_side_from_spec(border["top"]),
         bottom=_side_from_spec(border["bottom"]),
+        start=_side_from_spec(border.get("start")),
+        end=_side_from_spec(border.get("end")),
         diagonal=_side_from_spec(border["diagonal"]),
         diagonalUp=border["diagonalUp"],
         diagonalDown=border["diagonalDown"],

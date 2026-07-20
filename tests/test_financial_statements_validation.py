@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import unittest
 from pathlib import Path
 import tempfile
@@ -9,7 +10,10 @@ from openpyxl.styles import PatternFill
 
 from src.engine import build_bal_dataset, build_bg_dataset, build_er_dataset
 from src.parser import parse_balanza
-from src.validation import validate_financial_statements_workbook
+from src.validation import (
+    validate_financial_statements_workbook,
+    validate_print_contract_after_roundtrip,
+)
 from src.workbook import build_financial_statements_workbook
 
 
@@ -107,6 +111,39 @@ class FinancialStatementsWorkbookValidationTest(unittest.TestCase):
             )
 
         self.assertTrue(result.ok, result.issues)
+
+    def test_saved_and_reopened_workbook_obeys_the_complete_print_contract(self) -> None:
+        parsed, _bg, _bal, workbook = self._build()
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "estados_financieros.xlsx"
+            workbook.save(output)
+            evidence = validate_print_contract_after_roundtrip(
+                output,
+                normalized_rows=len(parsed.rows),
+            )
+
+        self.assertTrue(evidence.ok, evidence.issues)
+        if shutil.which("libreoffice") or shutil.which("soffice"):
+            self.assertTrue(evidence.pdf_rendered)
+            self.assertTrue(all(evidence.pdf_pages.values()))
+        else:
+            self.assertEqual(evidence.pdf_pages, {})
+            self.assertFalse(evidence.pdf_rendered)
+            self.assertTrue(any("unavailable" in warning for warning in evidence.warnings))
+
+    def test_print_contract_rejects_serialized_a4_margin_regression(self) -> None:
+        parsed, _bg, _bal, workbook = self._build()
+        workbook["ER"].page_margins.footer = 0.3
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "estados_financieros.xlsx"
+            workbook.save(output)
+            evidence = validate_print_contract_after_roundtrip(
+                output,
+                normalized_rows=len(parsed.rows),
+            )
+
+        self.assertFalse(evidence.ok)
+        self.assertTrue(any("ER footer margin" in issue for issue in evidence.issues))
 
 
 if __name__ == "__main__":

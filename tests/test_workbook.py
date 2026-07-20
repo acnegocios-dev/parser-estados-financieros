@@ -61,13 +61,13 @@ class ErWorkbookGenerationTest(unittest.TestCase):
         self.assertEqual(worksheet["H65"].value, "=H53+H58+H63")
         self.assertEqual(worksheet["H70"].value, "=H65-H67-H68")
 
-    def test_uses_manual_money_format_and_has_no_formula_errors(self) -> None:
+    def test_uses_approved_manual_number_format_and_has_no_formula_errors(self) -> None:
         result = self._build_result()
         worksheet = result.workbook["ER"]
         validation = validate_generated_workbook(result.workbook, balance_difference=0.0)
 
-        self.assertEqual(worksheet["H18"].number_format, "#,##0.00_ ;[Red]\\-#,##0.00\\ ")
-        self.assertEqual(worksheet["H62"].number_format, "#,##0.00")
+        self.assertEqual(worksheet["H18"].number_format, "General")
+        self.assertEqual(worksheet["H62"].number_format, "General")
         self.assertTrue(validation.formula_static_validation)
         self.assertFalse(validation.formula_recalculation_performed)
         self.assertIsNone(validation.formula_evaluated_error_count)
@@ -124,7 +124,7 @@ class ThreeSheetWorkbookContractTest(unittest.TestCase):
         worksheet = workbook["BAL"]
 
         self.assertEqual(worksheet["C1"].value, parsed.company_name)
-        self.assertEqual(worksheet["C2"].value, "Balanza de Comprobacion")
+        self.assertEqual(worksheet["C2"].value, "Balanza de Comprobaci\u00f3n")
         self.assertEqual(worksheet["C3"].value, parsed.period.period_label_bal)
         self.assertEqual(worksheet["C4"].value, f"RFC: {parsed.period.rfc}")
         self.assertEqual(
@@ -181,18 +181,38 @@ class ThreeSheetWorkbookContractTest(unittest.TestCase):
             {str(item) for item in bg.merged_cells.ranges},
             {"B7:L7", "B8:L8", "B9:L9", "B10:L10"},
         )
-        self.assertEqual(bg["L23"].value, "=ER!H70")
-        self.assertEqual(bg["F45"].value, "=SUM(F13:F26)")
-        self.assertEqual(bg["L45"].value, "=SUM(L13:L17,L20:L23)")
+        self.assertEqual(bg["F26"].value, "=SUM(E16:E24)")
+        self.assertEqual(bg["F36"].value, "=SUM(E29:E34)")
+        self.assertEqual(bg["F42"].value, "=SUM(E39:E40)")
+        self.assertEqual(bg["F45"].value, "=F26+F36+F42")
+        self.assertEqual(bg["L26"].value, "=SUM(K16:K20)")
+        self.assertEqual(bg["K34"].value, "=ER!H70")
+        self.assertEqual(bg["L36"].value, "=SUM(K31:K34)")
+        self.assertEqual(bg["L45"].value, "=L26+L36")
         self.assertEqual(bg["L47"].value, "=F45-L45")
         self.assertEqual(
             {str(item) for item in bal.merged_cells.ranges},
             {"C1:G1", "C2:G2", "C3:G3", "C4:G4"},
         )
-        self.assertEqual(bal.column_dimensions["C"].width, 31.33203125)
-        self.assertEqual(bal.column_dimensions["D"].width, 17.33203125)
+        self.assertEqual(bal.column_dimensions["C"].width, 28.46)
+        self.assertEqual(bal.column_dimensions["D"].width, 15.7)
         self.assertEqual(bal.print_area, "'BAL'!$C$1:$G$165")
         self.assertIsNone(bal.freeze_panes)
+
+    def test_print_titles_repeat_and_each_sheet_fits_one_page_wide(self) -> None:
+        workbook = self._build_result().workbook
+        expected = {
+            "BG": ("'BG'!$B$7:$L$47", "$7:$10"),
+            "ER": ("'ER'!$B$9:$J$70", "$9:$15"),
+            "BAL": ("'BAL'!$C$1:$G$165", "$1:$6"),
+        }
+        for sheet_name, (area, titles) in expected.items():
+            worksheet = workbook[sheet_name]
+            self.assertEqual(worksheet.print_area, area)
+            self.assertEqual(worksheet.print_title_rows, titles)
+            self.assertEqual(worksheet.page_setup.fitToWidth, 1)
+            self.assertEqual(worksheet.page_setup.fitToHeight, 0)
+            self.assertTrue(worksheet.sheet_properties.pageSetUpPr.fitToPage)
 
     def test_default_output_name_is_the_financial_statements_name(self) -> None:
         self.assertEqual(
