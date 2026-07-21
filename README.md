@@ -36,8 +36,9 @@ Endpoints:
 - `GET /health`
 - `POST /process`
 
-El `POST /process` acepta `multipart/form-data` con el campo `file` o un cuerpo
-JSON con `input_path` para pruebas locales.
+El `POST /process` acepta exclusivamente `multipart/form-data` con los campos
+`file` (balanza `.xls/.xlsx`) y `catalog` (CSV autorizado). No acepta rutas
+locales ni JSON de entrada.
 
 La respuesta y el reporte separan la inspeccion estatica de la evaluacion real:
 

@@ -75,6 +75,27 @@ class ApiRuntimeMetadataTest(unittest.TestCase):
                     "output_sha256": "a" * 64,
                     "formula_validation_mode": "static_only",
                 },
+                "engine": {
+                    "profile": {
+                        "accounting_profile_id": "profile-test",
+                        "accounting_profile_version": "1.0.0",
+                        "accounting_profile_status": "approved",
+                        "accounting_profile_company": "Empresa de prueba",
+                        "accounting_profile_rfc": "SME170717GA0",
+                        "accounting_profile_valid_from": "2026-07-01",
+                        "base_taxonomy_version": "sat-rmf-2026-v1",
+                        "catalog_semantic_sha256": "b" * 64,
+                    },
+                    "coverage": {
+                        "assigned": 2,
+                        "unassigned": 1,
+                        "ambiguous": 0,
+                        "duplicates": 0,
+                        "entries": [{"account_code": "6150-0005", "source_row": 8}],
+                        "section_controls": {"1": {"difference": 0.0, "status": "ok"}},
+                    },
+                    "warnings": [{"code": "profile_mapping_missing_zero", "account_code": "6150-0005"}],
+                },
             }
 
             payload = build_process_payload(report)
@@ -84,6 +105,11 @@ class ApiRuntimeMetadataTest(unittest.TestCase):
         self.assertEqual(payload["generator_profile"], "manual-eeff-three-sheet")
         self.assertEqual(payload["output_sha256"], "a" * 64)
         self.assertEqual(payload["formula_validation_mode"], "static_only")
+        self.assertEqual(payload["coverage"]["total_accounts"], 3)
+        self.assertFalse(payload["coverage"]["complete"])
+        self.assertEqual(payload["warnings"], [{"code": "profile_mapping_missing_zero"}])
+        self.assertEqual(payload["accounting_profile_rfc_hint"], "SME••••••GA0")
+        self.assertEqual(payload["catalog_semantic_sha256_short"], "bbbbbbbbbbbb")
         self.assertEqual(
             base64.b64decode(payload["output_xlsx_base64"]).decode("utf-8", errors="ignore")[:2],
             "PK",
@@ -91,6 +117,9 @@ class ApiRuntimeMetadataTest(unittest.TestCase):
         serialized = json.dumps(payload)
         self.assertNotIn(str(output_path.parent), serialized)
         self.assertNotIn("report_path", serialized)
+        self.assertNotIn("componentes_balance", serialized)
+        self.assertNotIn("6150-0005", serialized)
+        self.assertNotIn("SME170717GA0", serialized)
 
 
 if __name__ == "__main__":
