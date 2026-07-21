@@ -39,20 +39,36 @@ Ejecutar sólo con autorización de operación porque modifica el mount de
 ```bash
 # 1. Preparar un worktree limpio y verificar la rama publicada.
 git -C /opt/ci-acnegocios.mx/frontend fetch origin development
-git -C /opt/ci-acnegocios.mx/frontend worktree add /opt/ci-acnegocios.mx/frontend-development origin/development
+git -C /opt/ci-acnegocios.mx/frontend worktree add --detach /opt/ci-acnegocios.mx/frontend-development origin/development
 git -C /opt/ci-acnegocios.mx/frontend-development status --short --branch
 
 # 2. Integrar backend sin reset/clean/stash; conserva los dos outputs no rastreados.
 git -C /opt/n8n/apps/estados-financieros fetch origin feature/accounting-profiles-v1
 git -C /opt/n8n/apps/estados-financieros merge --ff-only origin/feature/accounting-profiles-v1
 
-# 3. Editar /opt/n8n/docker-compose.yml de forma revisada antes de recrear ci-dev:
-#    - source del bind /app: /opt/ci-acnegocios.mx/frontend-development
-#    - límites CPU/RAM y rotación de logs explícitos para ci-dev.
+# 3. Aplicar exactamente este hunk a /opt/n8n/docker-compose.yml antes de
+#    recrear ci-dev (no modifica ci-frontend):
+#
+#   ci-dev:
+#     image: node:20-alpine
+#     container_name: ci-dev
+#     cpus: 0.50
+#     mem_limit: 512m
+#     logging:
+#       driver: json-file
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
+#     working_dir: /app
+#     command: sh -c "npm install && npm start"
+#     volumes:
+#       - /opt/ci-acnegocios.mx/frontend-development:/app
+#
+# 4. Validar la configuración ya editada y recrear exclusivamente ci-dev.
 docker compose -f /opt/n8n/docker-compose.yml config
 docker compose -f /opt/n8n/docker-compose.yml up -d --no-deps ci-dev
 
-# 4. Recargar sólo la unidad backend ya limitada.
+# 5. Recargar sólo la unidad backend ya limitada.
 systemctl restart estados-financieros-api.service
 ```
 
