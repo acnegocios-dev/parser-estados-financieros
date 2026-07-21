@@ -1,0 +1,31 @@
+{
+  "schema_version": "sat-taxonomy-v1",
+  "taxonomy_id": "sat-rmf-2026-v1",
+  "source": "Anexo 24 de la RMF 2026; subset curado para clasificacion offline del modulo.",
+  "entries": [
+    {"sat_group_code": "101", "statement": "BG", "line_key": "bg.cash", "label": "Caja y efectivo"},
+    {"sat_group_code": "102", "statement": "BG", "line_key": "bg.banks", "label": "Bancos"},
+    {"sat_group_code": "105", "statement": "BG", "line_key": "bg.accounts_receivable", "label": "Cuentas por cobrar"},
+    {"sat_group_code": "107", "statement": "BG", "line_key": "bg.other_debtors", "label": "Deudores diversos"},
+    {"sat_group_code": "118", "statement": "BG", "line_key": "bg.tax_receivables", "label": "Contribuciones por recuperar"},
+    {"sat_group_code": "119", "statement": "BG", "line_key": "bg.prepayments", "label": "Pagos anticipados"},
+    {"sat_group_code": "151", "statement": "BG", "line_key": "bg.fixed_assets", "label": "Activo fijo"},
+    {"sat_group_code": "154", "statement": "BG", "line_key": "bg.transport_equipment", "label": "Equipo de transporte"},
+    {"sat_group_code": "156", "statement": "BG", "line_key": "bg.computer_equipment", "label": "Equipo de computo"},
+    {"sat_group_code": "201", "statement": "BG", "line_key": "bg.suppliers", "label": "Proveedores"},
+    {"sat_group_code": "205", "statement": "BG", "line_key": "bg.other_creditors", "label": "Acreedores diversos"},
+    {"sat_group_code": "210", "statement": "BG", "line_key": "bg.payroll_liabilities", "label": "Obligaciones laborales"},
+    {"sat_group_code": "211", "statement": "BG", "line_key": "bg.tax_liabilities", "label": "Impuestos por pagar"},
+    {"sat_group_code": "216", "statement": "BG", "line_key": "bg.other_liabilities", "label": "Otros pasivos"},
+    {"sat_group_code": "301", "statement": "BG", "line_key": "bg.share_capital", "label": "Capital social"},
+    {"sat_group_code": "304", "statement": "BG", "line_key": "bg.retained_earnings", "label": "Resultados acumulados"},
+    {"sat_group_code": "401", "statement": "ER", "line_key": "er.revenue", "label": "Ingresos"},
+    {"sat_group_code": "501", "statement": "ER", "line_key": "er.cost_of_sales", "label": "Costo de ventas"},
+    {"sat_group_code": "601", "statement": "ER", "line_key": "er.operating_expenses", "label": "Gastos de operacion"},
+    {"sat_group_code": "604", "statement": "ER", "line_key": "er.operating_expenses", "label": "Gastos de operacion"},
+    {"sat_group_code": "607", "statement": "ER", "line_key": "er.profit_sharing", "label": "PTU"},
+    {"sat_group_code": "611", "statement": "ER", "line_key": "er.income_tax", "label": "ISR"},
+    {"sat_group_code": "701", "statement": "ER", "line_key": "er.financial_expenses", "label": "Gastos financieros"},
+    {"sat_group_code": "702", "statement": "ER", "line_key": "er.financial_income", "label": "Productos financieros"}
+  ]
+}
