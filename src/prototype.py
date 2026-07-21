@@ -2,19 +2,23 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, is_dataclass, replace
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
 try:
-    from .engine import build_bal_dataset, build_bg_dataset, build_er_dataset
-    from .parser import BalanzaRow, parse_balanza
+    from .account_catalog import BLOCKING, parse_account_catalog
+    from .accounting_profiles import CatalogIdentity, AccountingProfile, load_accounting_profiles, select_profile_for_runtime
+    from .engine import ProfileCoverageError, build_bal_dataset, build_bg_dataset, build_er_dataset
+    from .parser import BalanzaRow, enrich_balanza_rows, parse_balanza
     from .runtime_metadata import build_runtime_metadata, sha256_file
     from .validation import recalculate_workbook, validate_balance_sheet, validate_generated_workbook
     from .workbook import save_financial_statements_workbook
 except ImportError:  # pragma: no cover - supports direct script execution.
-    from engine import build_bal_dataset, build_bg_dataset, build_er_dataset
-    from parser import BalanzaRow, parse_balanza
+    from account_catalog import BLOCKING, parse_account_catalog
+    from accounting_profiles import CatalogIdentity, AccountingProfile, load_accounting_profiles, select_profile_for_runtime
+    from engine import ProfileCoverageError, build_bal_dataset, build_bg_dataset, build_er_dataset
+    from parser import BalanzaRow, enrich_balanza_rows, parse_balanza
     from runtime_metadata import build_runtime_metadata, sha256_file
     from validation import recalculate_workbook, validate_balance_sheet, validate_generated_workbook
     from workbook import save_financial_statements_workbook
@@ -23,12 +27,24 @@ except ImportError:  # pragma: no cover - supports direct script execution.
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = ROOT / "sample-inputs" / "balanza_SME170717GA0_2026_07.xls"
 OUTPUT_DIR = ROOT / "sample-outputs"
+PROFILE_DIR = ROOT / "src" / "profiles"
+
+
+class RuntimeGenerationError(ValueError):
+    """A safe, machine-readable generation rejection for the HTTP boundary."""
+
+    def __init__(self, code: str, *, details: list[dict[str, Any]] | None = None):
+        self.code = code
+        self.details = details or []
+        super().__init__(code)
 
 
 def run_prototype(
     input_path: str | Path = DEFAULT_INPUT,
     *,
     output_dir: str | Path | None = None,
+    catalog_path: str | Path | None = None,
+    profiles: tuple[AccountingProfile, ...] | None = None,
 ) -> dict[str, Any]:
     """Generate the three-sheet workbook from one uploaded balanza.
 
@@ -39,22 +55,60 @@ def run_prototype(
     source = Path(input_path)
     target_dir = Path(output_dir) if output_dir is not None else OUTPUT_DIR
     parsed = parse_balanza(source)
-    leaf_rows = _leaf_rows(parsed.rows)
-    rows = [row.to_dict() for row in leaf_rows]
-    engine_result = build_er_dataset(
-        rows,
-        company=parsed.company_name,
-        period=parsed.period.period_ym,
-        source_path=parsed.source_path,
-    )
+    profile: AccountingProfile | None = None
+    catalog_identity: CatalogIdentity | None = None
+    if catalog_path is not None:
+        catalog = parse_account_catalog(catalog_path)
+        if not catalog.is_valid or catalog.semantic_sha256 is None:
+            raise RuntimeGenerationError(
+                "catalog_validation_failed",
+                details=[issue.to_dict() for issue in catalog.issues if issue.severity == BLOCKING],
+            )
+        catalog_identity = CatalogIdentity(catalog.source_sha256, catalog.semantic_sha256)
+        try:
+            profile = select_profile_for_runtime(
+                profiles if profiles is not None else load_accounting_profiles(PROFILE_DIR),
+                rfc=parsed.period.rfc,
+                as_of=date(parsed.period.period_year, parsed.period.period_month, 1),
+                catalog_identity=catalog_identity,
+            )
+        except Exception as exc:
+            issues = getattr(exc, "issues", ())
+            code = next((issue.code for issue in issues if issue.code in {
+                "profile_not_found", "profile_not_approved", "catalog_hash_mismatch", "ambiguous_mapping",
+            }), "profile_not_found")
+            raise RuntimeGenerationError(code, details=[issue.to_dict() for issue in issues]) from exc
+        parsed = replace(parsed, rows=enrich_balanza_rows(parsed.rows, catalog.rows))
+    # The engine owns leaf selection so catalog parent_code can take
+    # precedence over legacy code-prefix hierarchy.
+    rows = [row.to_dict() for row in parsed.rows]
+    try:
+        engine_result = build_er_dataset(
+            rows,
+            company=parsed.company_name,
+            period=parsed.period.period_ym,
+            source_path=parsed.source_path,
+            profile=profile,
+            enforce_profile_coverage=True,
+        )
 
-    bg_dataset = build_bg_dataset(
-        parsed.rows,
-        result_ejercicio=engine_result["raw_amounts"]["resultado_ejercicio"],
-        company=parsed.company_name,
-        period=parsed.period.period_ym,
-        source_path=parsed.source_path,
-    )
+        bg_dataset = build_bg_dataset(
+            parsed.rows,
+            result_ejercicio=engine_result["raw_amounts"]["resultado_ejercicio"],
+            company=parsed.company_name,
+            period=parsed.period.period_ym,
+            source_path=parsed.source_path,
+            profile=profile,
+            enforce_profile_coverage=True,
+        )
+    except ProfileCoverageError as exc:
+        blocker_codes = {item.get("code") for item in exc.blockers}
+        code = (
+            "unmapped_material_accounts" if "profile_mapping_unassigned_material" in blocker_codes
+            else "ambiguous_mapping" if "profile_mapping_duplicate" in blocker_codes
+            else "coverage_mismatch"
+        )
+        raise RuntimeGenerationError(code, details=list(exc.blockers)) from exc
     bal_dataset = build_bal_dataset(parsed.rows)
     workbook_result = save_financial_statements_workbook(
         engine_result,
@@ -120,7 +174,7 @@ def run_prototype(
             "sheet_name": parsed.sheet_name,
             "header_row": parsed.header_row,
             "normalized_rows": len(parsed.rows),
-            "leaf_rows_used_for_calculation": len(leaf_rows),
+            "leaf_rows_used_for_calculation": engine_result["source_rows_used"],
             "empty_rows": list(parsed.empty_rows),
             "structure_issues": [issue.to_dict() for issue in parsed.structure_issues],
             "warnings": [warning.to_dict() for warning in parsed.warnings],
@@ -130,8 +184,10 @@ def run_prototype(
             "unmatched_accounts_count": len(engine_result["unmatched_accounts"]),
             "unmatched_accounts": engine_result["unmatched_accounts"],
             "warnings": engine_result["warnings"],
+            "coverage": engine_result["coverage"],
             "formulas": engine_result["formulas"],
             "sign_policy": engine_result["sign_policy"],
+            "profile": engine_result["profile"],
         },
         "workbook": {
             "sheet_names": list(workbook_result.workbook.sheetnames),

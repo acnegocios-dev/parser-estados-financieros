@@ -149,7 +149,7 @@ def build_financial_statements_workbook(
     _write_header(er, company, period)
     line_values = _index_dataset_lines(er_dataset, warnings)
     formula_cells.extend(_write_er_body(er, line_values, warnings))
-    _style_er_sheet(er)
+    _style_er_sheet(er, er_dataset)
     _write_bal_sheet(bal, company, period, bal_dataset or {}, metadata, formula_cells)
 
     return WorkbookBuildResult(
@@ -301,7 +301,11 @@ def _write_bg_sheet(
     _apply_versioned_sheet_presentation(
         ws, spec, white_bounds=(1, 47, 1, 12)
     )
-    _configure_print_layout(ws, print_area="B7:L47", title_rows="7:10")
+    _configure_print_layout(
+        ws,
+        print_area=f"B7:L{_effective_print_last_row(dataset, statement='BG', minimum=47)}",
+        title_rows="7:10",
+    )
 
 
 def _write_bal_sheet(
@@ -611,14 +615,35 @@ def _sanitize_formula(formula: str) -> str:
     return clean
 
 
-def _style_er_sheet(ws) -> None:
+def _style_er_sheet(ws, dataset: Any | None = None) -> None:
     """Apply the exact non-fill ER contract and the required white canvas."""
 
     spec = _load_er_style_spec()
     _apply_versioned_sheet_presentation(
         ws, spec, white_bounds=(1, 70, 1, 10)
     )
-    _configure_print_layout(ws, print_area="B9:J70", title_rows="9:15")
+    _configure_print_layout(
+        ws,
+        print_area=f"B9:J{_effective_print_last_row(dataset, statement='ER', minimum=15)}",
+        title_rows="9:15",
+    )
+
+
+def _effective_print_last_row(dataset: Any | None, *, statement: str, minimum: int) -> int:
+    """Derive print bounds from enabled line roles, never from account codes.
+
+    SME retains its approved extent because its calculated-result role is row
+    70 (and BG's cuadre role is row 47).  A future generator profile can
+    supply a shorter or longer role map through ``effective_rows``.
+    """
+
+    effective = _read_field(dataset, ("effective_rows",)) or {}
+    rows = effective.get("rows", ()) if isinstance(effective, Mapping) else ()
+    if statement == "BG":
+        role_rows = effective.get("role_rows", ()) if isinstance(effective, Mapping) else ()
+        rows = tuple(rows) + tuple(role_rows)
+    numeric_rows = [int(row) for row in rows if str(row).isdigit()]
+    return max([minimum, *numeric_rows])
 
 
 def _load_er_style_spec() -> dict[str, Any]:

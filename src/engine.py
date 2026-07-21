@@ -8,7 +8,13 @@ rules editable because the definitive chart of accounts is not available yet.
 from __future__ import annotations
 
 from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+
+try:
+    from .accounting_profiles import AccountingProfile, MappingRule, load_accounting_profile
+except ImportError:  # pragma: no cover - supports PYTHONPATH=src usage.
+    from accounting_profiles import AccountingProfile, MappingRule, load_accounting_profile
 
 
 Money = Decimal
@@ -290,6 +296,78 @@ BG_LINE_DEFINITIONS: Tuple[Dict[str, Any], ...] = (
 )
 
 
+DEFAULT_ACCOUNTING_PROFILE_PATH = (
+    Path(__file__).parent / "profiles" / "SME170717GA0-2026-07-v1.json"
+)
+
+
+class ProfileCoverageError(ValueError):
+    """Raised when a profile cannot safely produce a financial statement."""
+
+    def __init__(self, blockers: Sequence[Mapping[str, Any]]):
+        self.blockers = tuple(dict(item) for item in blockers)
+        super().__init__("; ".join(str(item.get("code", "profile_coverage")) for item in blockers))
+
+
+def load_default_accounting_profile() -> AccountingProfile:
+    """Return the sole approved local profile used by this isolated rollout."""
+
+    return load_accounting_profile(DEFAULT_ACCOUNTING_PROFILE_PATH)
+
+
+def _profile_or_default(profile: AccountingProfile | None) -> AccountingProfile:
+    return profile if profile is not None else load_default_accounting_profile()
+
+
+def _profile_line_definitions(
+    profile: AccountingProfile,
+    statement: str,
+    layout: Sequence[Mapping[str, Any]],
+) -> tuple[dict[str, Any], ...]:
+    """Project approved profile rules onto generator-owned line geometry.
+
+    Codes live only in the accounting profile.  The static layouts retain
+    labels/rows/sections needed to preserve the approved workbook template.
+    """
+
+    enabled = set(profile.enabled_lines.get(statement, ()))
+    by_line: dict[str, list[MappingRule]] = {}
+    for rule in profile.rules:
+        if rule.statement == statement and rule.approved:
+            by_line.setdefault(rule.line_key, []).append(rule)
+    definitions: list[dict[str, Any]] = []
+    for item in layout:
+        key = str(item["key"])
+        if key not in enabled:
+            continue
+        rules = by_line.get(key, [])
+        codes = tuple(rule.account_code for rule in rules if rule.account_code)
+        excluded = tuple(
+            code for rule in rules for code in rule.exclude_account_codes
+        )
+        signs = {rule.presentation_sign for rule in rules if rule.account_code}
+        if len(signs) > 1:
+            raise ProfileCoverageError(({
+                "code": "profile_line_sign_ambiguous", "line_key": key,
+            },))
+        definitions.append({
+            **item,
+            "codes": codes,
+            "exclude_codes": excluded,
+            "sign": Decimal(str(next(iter(signs), 1))),
+            "rule_ids": tuple(rule.rule_id for rule in rules),
+        })
+    return tuple(definitions)
+
+
+def _active_bg_definitions(profile: AccountingProfile | None) -> tuple[dict[str, Any], ...]:
+    return _profile_line_definitions(_profile_or_default(profile), "BG", BG_LINE_DEFINITIONS)
+
+
+def _active_er_definitions(profile: AccountingProfile | None) -> tuple[dict[str, Any], ...]:
+    return _profile_line_definitions(_profile_or_default(profile), "ER", ER_MAPPED_LINES)
+
+
 def build_input_views(rows: Iterable[NormalizedRow]) -> Dict[str, Tuple[Dict[str, Any], ...]]:
     """Preserve BAL's original rows while exposing the leaf-only calculation view."""
 
@@ -318,6 +396,10 @@ def build_bal_dataset(rows: Iterable[NormalizedRow]) -> Dict[str, Any]:
             "debe": money_to_float(to_decimal(row.get("debe"))),
             "haber": money_to_float(to_decimal(row.get("haber"))),
             "saldo_final": money_to_float(to_decimal(row.get("saldo_final"))),
+            "parent_code": row.get("parent_code"),
+            "nature": row.get("nature"),
+            "sat_group_code": row.get("sat_group_code"),
+            "catalog_match": row.get("catalog_match"),
             "is_accumulator": is_accumulator,
             "source_row": row.get("source_row"),
         }
@@ -360,10 +442,8 @@ def resolve_account_code(
         row for row in all_rows
         if canonical_account_code(row.get("account_code") or row.get("top_account") or "") == expected
     )
-    descendant_leaves = tuple(
-        row for row in views["calculation_rows"]
-        if (code := canonical_account_code(row.get("account_code") or row.get("top_account") or ""))
-        and code.startswith(f"{expected}-")
+    descendant_leaves, hierarchy_method = _descendant_leaf_rows(
+        all_rows, views["calculation_rows"], expected
     )
     accumulator_amount = sum((to_decimal(row.get("saldo_final")) for row in exact_rows), Decimal("0"))
     leaf_amount = sum((to_decimal(row.get("saldo_final")) for row in descendant_leaves), Decimal("0"))
@@ -389,6 +469,7 @@ def resolve_account_code(
         "policy": policy,
         "exact_rows": tuple(exact_rows),
         "leaf_rows": tuple(descendant_leaves),
+        "hierarchy_method": hierarchy_method,
         "aggregate_detail_mismatch": bool(exact_rows and descendant_leaves and abs(difference) > tolerance_amount),
     }
 
@@ -401,6 +482,8 @@ def build_bg_dataset(
     company: str | None = None,
     period: str | None = None,
     source_path: str | None = None,
+    profile: AccountingProfile | None = None,
+    enforce_profile_coverage: bool = False,
 ) -> Dict[str, Any]:
     """Build the BG dataset from account codes, never from manual row numbers."""
 
@@ -410,7 +493,9 @@ def build_bg_dataset(
     lines: List[Dict[str, Any]] = []
     totals = {"activo": Decimal("0"), "pasivo": Decimal("0"), "capital": Decimal("0")}
 
-    for definition in BG_LINE_DEFINITIONS:
+    active_profile = _profile_or_default(profile)
+    definitions = _active_bg_definitions(active_profile)
+    for definition in definitions:
         resolutions = [resolve_account_code(all_rows, code, tolerance=tolerance) for code in definition["codes"]]
         amount = sum((resolution["amount"] for resolution in resolutions), Decimal("0")) * to_decimal(definition.get("sign", 1))
         section = str(definition["section"])
@@ -423,6 +508,7 @@ def build_bg_dataset(
                 "label": definition["label"],
                 "section": section,
                 "account_codes": list(definition["codes"]),
+                "presentation_sign": int(to_decimal(definition.get("sign", 1))),
                 "amount": money_to_float(amount),
                 "resolutions": [_resolution_payload(resolution) for resolution in resolutions],
             }
@@ -459,12 +545,18 @@ def build_bg_dataset(
         "cuadra": abs(difference) < tolerance_amount,
         "balanza_no_cuadra": abs(difference) >= tolerance_amount,
     }
+    coverage = build_profile_coverage(all_rows, active_profile)
+    if enforce_profile_coverage:
+        require_profile_coverage(coverage)
     return {
         "company": company,
         "period": period,
         "source_path": source_path,
         "lines": lines,
         "warnings": warnings,
+        "profile": _profile_dataset_metadata(active_profile),
+        "coverage": coverage,
+        "effective_rows": _effective_bg_rows(lines),
         "input_views": {"all_rows": len(all_rows), "calculation_rows": len(views["calculation_rows"])},
         "balance": balance,
         **balance,
@@ -477,6 +569,8 @@ def build_er_dataset(
     company: str | None = None,
     period: str | None = None,
     source_path: str | None = None,
+    profile: AccountingProfile | None = None,
+    enforce_profile_coverage: bool = False,
 ) -> Dict[str, Any]:
     """Build the deterministic ER dataset from normalized Auditalo rows.
 
@@ -490,7 +584,9 @@ def build_er_dataset(
     account_matches: Dict[str, List[Dict[str, Any]]] = {}
     warnings: List[Dict[str, Any]] = []
 
-    for definition in ER_MAPPED_LINES:
+    active_profile = _profile_or_default(profile)
+    definitions = _active_er_definitions(active_profile)
+    for definition in definitions:
         key = str(definition["key"])
         matches = _matching_rows(leaf_rows, definition)
         sign = to_decimal(definition.get("sign", Decimal("1")))
@@ -506,9 +602,12 @@ def build_er_dataset(
         account_matches[str(definition["key"])] = []
 
     _calculate_er_totals(amounts)
-    lines = _er_dataset_lines(amounts, account_matches)
+    lines = _er_dataset_lines(amounts, account_matches, definitions=definitions)
     base_amount = amounts.get("ingresos_por_servicios", Decimal("0"))
-    unmatched_accounts = _er_unmatched_accounts(leaf_rows)
+    unmatched_accounts = _er_unmatched_accounts(leaf_rows, definitions=definitions)
+    coverage = build_profile_coverage(input_views["all_rows"], active_profile)
+    if enforce_profile_coverage:
+        require_profile_coverage(coverage)
 
     return {
         "company": company,
@@ -524,6 +623,9 @@ def build_er_dataset(
             if warning.get("code") == "cuenta_no_encontrada"
         ],
         "warnings": warnings,
+        "profile": _profile_dataset_metadata(active_profile),
+        "coverage": coverage,
+        "effective_rows": _effective_er_rows(lines),
         "formulas": {str(line["key"]): str(line["formula"]) for line in ER_CALCULATED_LINES},
         "raw_amounts": {key: str(value) for key, value in amounts.items()},
         "base_line": {
@@ -822,23 +924,78 @@ def _row_as_mapping(row: NormalizedRow | Any) -> Dict[str, Any]:
 
 
 def leaf_account_rows(rows: Iterable[NormalizedRow]) -> Tuple[NormalizedRow, ...]:
-    """Return leaf/detail accounts so accumulator rows are not double counted."""
+    """Return leaves using catalog parent links before code-prefix fallback."""
 
     materialized = tuple(_row_as_mapping(row) for row in rows)
     codes = {
         canonical_account_code(row.get("account_code") or row.get("top_account") or "")
         for row in materialized
     }
-    leaf_codes = {
-        code
-        for code in codes
-        if code and not any(other != code and other.startswith(f"{code}-") for other in codes)
-    }
+    children = _catalog_children(materialized)
+    leaf_codes: set[str] = set()
+    for code in codes:
+        if not code:
+            continue
+        # A catalog parent relation is authoritative for this node.  Prefix
+        # matching only fills gaps where the catalog does not provide it.
+        if code in children:
+            if not children[code]:
+                leaf_codes.add(code)
+            continue
+        if not any(other != code and other.startswith(f"{code}-") for other in codes):
+            leaf_codes.add(code)
     return tuple(
         row
         for row in materialized
         if canonical_account_code(row.get("account_code") or row.get("top_account") or "") in leaf_codes
     )
+
+
+def _catalog_children(rows: Sequence[NormalizedRow]) -> dict[str, set[str]]:
+    """Build only valid direct parent evidence; no parent is invented."""
+
+    codes = {
+        canonical_account_code(row.get("account_code") or row.get("top_account") or "")
+        for row in rows
+    }
+    children: dict[str, set[str]] = {}
+    for row in rows:
+        code = canonical_account_code(row.get("account_code") or row.get("top_account") or "")
+        parent = canonical_account_code(row.get("parent_code") or "")
+        if code and parent and parent in codes and parent != code:
+            children.setdefault(parent, set()).add(code)
+            children.setdefault(code, set())
+    return children
+
+
+def _descendant_leaf_rows(
+    all_rows: Sequence[NormalizedRow],
+    calculation_rows: Sequence[NormalizedRow],
+    expected: str,
+) -> tuple[tuple[NormalizedRow, ...], str]:
+    """Resolve descendants via parent_code, then via legacy code prefix."""
+
+    children = _catalog_children(all_rows)
+    if expected in children:
+        reachable: set[str] = set()
+        pending = list(children[expected])
+        while pending:
+            code = pending.pop()
+            if code in reachable:
+                continue
+            reachable.add(code)
+            pending.extend(children.get(code, ()))
+        leaves = tuple(
+            row for row in calculation_rows
+            if canonical_account_code(row.get("account_code") or row.get("top_account") or "") in reachable
+        )
+        return leaves, "parent_code"
+    leaves = tuple(
+        row for row in calculation_rows
+        if (code := canonical_account_code(row.get("account_code") or row.get("top_account") or ""))
+        and code.startswith(f"{expected}-")
+    )
+    return leaves, "prefix_fallback"
 
 
 def _matching_rows(
@@ -865,6 +1022,167 @@ def _code_matches(account_code: str, expected_codes: Sequence[str]) -> bool:
     )
 
 
+def build_profile_coverage(
+    rows: Iterable[NormalizedRow], profile: AccountingProfile | None = None
+) -> Dict[str, Any]:
+    """Account for every material leaf once, with auditable section controls.
+
+    Prefixes are used solely when the catalog does not supply a usable parent
+    chain.  The first digit is a control bucket, never a classification rule.
+    """
+
+    active_profile = _profile_or_default(profile)
+    views = build_input_views(rows)
+    leaves = views["calculation_rows"]
+    rules = tuple(rule for rule in active_profile.rules if rule.approved and rule.account_code)
+    by_code = {
+        canonical_account_code(row.get("account_code") or row.get("top_account") or ""): row
+        for row in views["all_rows"]
+    }
+    entries: list[dict[str, Any]] = []
+    blockers: list[dict[str, Any]] = []
+    warnings: list[dict[str, Any]] = []
+    source_totals = {key: Decimal("0") for key in ("1", "2", "3")}
+    assigned_totals = {key: Decimal("0") for key in ("1", "2", "3")}
+
+    for row in leaves:
+        code = canonical_account_code(row.get("account_code") or row.get("top_account") or "")
+        amount = to_decimal(row.get("saldo_final"))
+        section = code[:1] if code[:1] in source_totals else None
+        candidates = [rule for rule in rules if _rule_covers_account(code, rule, by_code)]
+        line_keys = tuple(sorted({rule.line_key for rule in candidates}))
+        status = "assigned" if len(line_keys) == 1 else (
+            "unassigned" if not line_keys else "duplicate"
+        )
+        entry = {
+            "account_code": code,
+            "source_row": row.get("source_row"),
+            "amount": money_to_float(amount),
+            "section": section,
+            "status": status,
+            "line_keys": list(line_keys),
+            "rule_ids": [rule.rule_id for rule in candidates],
+        }
+        entries.append(entry)
+        # Section controls compare presentation amounts.  A contra-asset's
+        # source balance and its displayed sign are therefore reconciled on
+        # the same basis; an unmapped account remains raw and blocks anyway.
+        presentation_amount = amount * to_decimal(candidates[0].presentation_sign) if status == "assigned" else amount
+        if section:
+            source_totals[section] += presentation_amount
+        if status == "assigned":
+            sign = candidates[0].presentation_sign
+            if section:
+                assigned_totals[section] += amount * to_decimal(sign)
+        elif amount == 0:
+            warnings.append({
+                "code": "profile_mapping_missing_zero", "severity": "warning", **entry,
+            })
+        else:
+            blockers.append({
+                "code": "profile_mapping_unassigned_material" if status == "unassigned" else "profile_mapping_duplicate",
+                "severity": "blocking", **entry,
+            })
+
+    section_controls: dict[str, dict[str, Any]] = {}
+    for section in ("1", "2", "3"):
+        difference = source_totals[section] - assigned_totals[section]
+        control = {
+            "source_amount": money_to_float(source_totals[section]),
+            "assigned_amount": money_to_float(assigned_totals[section]),
+            "difference": money_to_float(difference),
+            "status": "blocking" if abs(difference) >= Decimal("1") else "ok",
+        }
+        section_controls[section] = control
+        if control["status"] == "blocking":
+            blockers.append({
+                "code": "profile_section_coverage_difference",
+                "severity": "blocking",
+                "section": section,
+                **control,
+            })
+    return {
+        "profile_id": active_profile.profile_id,
+        "profile_version": active_profile.profile_version,
+        "entries": entries,
+        "assigned": sum(entry["status"] == "assigned" for entry in entries),
+        "unassigned": sum(entry["status"] == "unassigned" for entry in entries),
+        "ambiguous": sum(entry["status"] == "duplicate" for entry in entries),
+        "duplicates": sum(entry["status"] == "duplicate" for entry in entries),
+        "section_controls": section_controls,
+        "blockers": blockers,
+        "warnings": warnings,
+    }
+
+
+def require_profile_coverage(coverage: Mapping[str, Any]) -> None:
+    """Block generation on material gaps, duplicate assignment, or >= $1 drift."""
+
+    blockers = coverage.get("blockers", ())
+    if blockers:
+        raise ProfileCoverageError(blockers)
+
+
+def _rule_covers_account(
+    account_code: str,
+    rule: MappingRule,
+    by_code: Mapping[str, NormalizedRow],
+) -> bool:
+    expected = canonical_account_code(rule.account_code or "")
+    if not expected or _code_matches(account_code, tuple(canonical_account_code(code) for code in rule.exclude_account_codes)):
+        return False
+    if account_code == expected:
+        return True
+    # Catalog hierarchy is primary.  A prefix may only stand in for missing
+    # parent evidence, preserving legacy input behavior without inventing it.
+    current = by_code.get(account_code)
+    seen: set[str] = set()
+    while current is not None:
+        parent = canonical_account_code(current.get("parent_code") or "")
+        if not parent or parent in seen:
+            break
+        if parent == expected:
+            return True
+        seen.add(parent)
+        current = by_code.get(parent)
+    return account_code.startswith(f"{expected}-")
+
+
+def _profile_dataset_metadata(profile: AccountingProfile) -> Dict[str, Any]:
+    return {
+        "accounting_profile_id": profile.profile_id,
+        "accounting_profile_version": profile.profile_version,
+        "accounting_profile_status": profile.status,
+        "accounting_profile_company": profile.company_name,
+        "accounting_profile_rfc": profile.rfc,
+        "accounting_profile_valid_from": profile.valid_from.isoformat(),
+        "accounting_profile_valid_to": None if profile.valid_to is None else profile.valid_to.isoformat(),
+        "rfc": profile.rfc,
+        "base_taxonomy_version": profile.taxonomy_version,
+        "catalog_source_sha256": profile.catalog_identity.source_sha256,
+        "catalog_semantic_sha256": profile.catalog_identity.semantic_sha256,
+        "generator_profile_id": None if profile.generator_profile is None else profile.generator_profile.profile_id,
+        "generator_profile_version": None if profile.generator_profile is None else profile.generator_profile.profile_version,
+    }
+
+
+def _effective_bg_rows(lines: Sequence[Mapping[str, Any]]) -> Dict[str, list[str]]:
+    return {
+        "mapped_line_keys": [str(line["key"]) for line in lines],
+        "subtotal_line_keys": ["total_circulante", "total_no_circulante", "total_otros_activos", "total_activo", "total_pasivo", "total_capital", "cuadre"],
+    }
+
+
+def _effective_er_rows(lines: Sequence[Mapping[str, Any]]) -> Dict[str, list[Any]]:
+    return {
+        "line_keys": [str(line["key"]) for line in lines],
+        "rows": [int(line["excel_row"]) for line in lines],
+        "subtotal_line_keys": [
+            str(line["key"]) for line in lines if line.get("line_type") == "calculated"
+        ],
+    }
+
+
 def _resolution_payload(resolution: Mapping[str, Any]) -> Dict[str, Any]:
     return {
         "account_code": resolution["account_code"],
@@ -879,6 +1197,9 @@ def _resolution_payload(resolution: Mapping[str, Any]) -> Dict[str, Any]:
             else float(to_decimal(resolution["difference"]))
         ),
         "policy": resolution["policy"],
+        "hierarchy_method": resolution.get("hierarchy_method"),
+        "exact_source_rows": [row.get("source_row") for row in resolution.get("exact_rows", ())],
+        "leaf_source_rows": [row.get("source_row") for row in resolution.get("leaf_rows", ())],
     }
 
 
@@ -946,17 +1267,23 @@ def _calculate_er_totals(amounts: Dict[str, Money]) -> None:
 def _er_dataset_lines(
     amounts: Mapping[str, Money],
     account_matches: Mapping[str, Sequence[Mapping[str, Any]]],
+    *,
+    definitions: Sequence[Mapping[str, Any]] | None = None,
 ) -> List[Dict[str, Any]]:
-    definitions: List[Mapping[str, Any]] = []
-    definitions.extend(ER_MAPPED_LINES)
-    definitions.extend(ER_ZERO_LINES)
-    definitions.extend(ER_CALCULATED_LINES)
-    definitions.sort(key=lambda item: int(item["excel_row"]))
+    line_definitions: List[Mapping[str, Any]] = []
+    line_definitions.extend(definitions if definitions is not None else _active_er_definitions(None))
+    line_definitions.extend(ER_ZERO_LINES)
+    line_definitions.extend(ER_CALCULATED_LINES)
+    line_definitions.sort(key=lambda item: int(item["excel_row"]))
+    mapped_signs = {
+        str(item["key"]): int(to_decimal(item.get("sign", 1)))
+        for item in (definitions if definitions is not None else _active_er_definitions(None))
+    }
 
     base_amount = amounts.get("ingresos_por_servicios", Decimal("0"))
     calculated_keys = {str(line["key"]) for line in ER_CALCULATED_LINES}
     lines: List[Dict[str, Any]] = []
-    for definition in definitions:
+    for definition in line_definitions:
         key = str(definition["key"])
         amount = amounts.get(key, Decimal("0"))
         percentage = Decimal("0") if base_amount == 0 else amount / base_amount
@@ -972,6 +1299,7 @@ def _er_dataset_lines(
                 "period_amount": money_to_float(amount),
                 "accumulated_amount": money_to_float(amount),
                 "amount": money_to_float(amount),
+                "presentation_sign": mapped_signs.get(key, 1),
                 "percentage_column": "J",
                 "percentage_of": "H18",
                 "percentage": percent_to_float(percentage),
@@ -989,6 +1317,10 @@ def _matched_account_row(row: NormalizedRow) -> Dict[str, Any]:
         "account_code": canonical_account_code(row.get("account_code") or row.get("top_account") or ""),
         "account_name": row.get("account_name"),
         "top_account": row.get("top_account"),
+        "parent_code": row.get("parent_code"),
+        "nature": row.get("nature"),
+        "sat_group_code": row.get("sat_group_code"),
+        "catalog_match": row.get("catalog_match"),
         "saldo_final": money_to_float(to_decimal(row.get("saldo_final"))),
     }
 
@@ -1015,8 +1347,13 @@ def _er_accounting_dataset(
     return dataset
 
 
-def _er_unmatched_accounts(rows: Sequence[NormalizedRow]) -> List[Dict[str, Any]]:
-    definitions = [definition for definition in ER_MAPPED_LINES if definition.get("codes")]
+def _er_unmatched_accounts(
+    rows: Sequence[NormalizedRow], *, definitions: Sequence[Mapping[str, Any]] | None = None
+) -> List[Dict[str, Any]]:
+    definitions = [
+        definition for definition in (definitions if definitions is not None else _active_er_definitions(None))
+        if definition.get("codes")
+    ]
     unmatched: List[Dict[str, Any]] = []
     for row in rows:
         account_code = canonical_account_code(row.get("account_code") or row.get("top_account") or "")

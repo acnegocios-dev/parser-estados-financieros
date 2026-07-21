@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import zipfile
 from collections import Counter
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Iterable
@@ -39,6 +39,13 @@ class BalanzaRow:
     debe: Decimal
     haber: Decimal
     saldo_final: Decimal
+    # These fields are evidence from the private company catalog.  They are
+    # intentionally optional because a balanza can be parsed before its
+    # catalog is available; no value is inferred from the account prefix.
+    parent_code: str | None = None
+    nature: str | None = None
+    sat_group_code: str | None = None
+    catalog_match: str = "not_provided"
 
     def to_dict(self) -> dict[str, object]:
         data = asdict(self)
@@ -134,7 +141,12 @@ def detect_mime_kind(path: str | Path) -> str:
     return UNKNOWN_FILE
 
 
-def parse_balanza(path: str | Path, sheet_name: str = REQUIRED_SHEET) -> ParsedBalanza:
+def parse_balanza(
+    path: str | Path,
+    sheet_name: str = REQUIRED_SHEET,
+    *,
+    catalog_rows: Iterable[Any] | None = None,
+) -> ParsedBalanza:
     workbook_path = Path(path)
     period = extract_period_variables(workbook_path)
     detected_mime_kind = detect_mime_kind(workbook_path)
@@ -233,6 +245,9 @@ def parse_balanza(path: str | Path, sheet_name: str = REQUIRED_SHEET) -> ParsedB
 
     if not rows:
         issues.append(RowIssue(header_row, "No account rows were parsed.", ()))
+    if catalog_rows is not None:
+        rows = list(enrich_balanza_rows(rows, catalog_rows))
+
     return ParsedBalanza(
         source_path=str(workbook_path),
         detected_mime_kind=detected_mime_kind,
@@ -251,6 +266,47 @@ def parse_balanza(path: str | Path, sheet_name: str = REQUIRED_SHEET) -> ParsedB
 
 def parse_balanza_dict(path: str | Path, sheet_name: str = REQUIRED_SHEET) -> dict[str, object]:
     return parse_balanza(path, sheet_name=sheet_name).to_dict()
+
+
+def enrich_balanza_rows(
+    rows: Iterable[BalanzaRow], catalog_rows: Iterable[Any]
+) -> tuple[BalanzaRow, ...]:
+    """Attach catalog evidence by exact text code without repairing either source.
+
+    A duplicate catalog key remains explicitly ambiguous.  The parser never
+    guesses a parent, nature, or SAT group from a first digit or account name.
+    """
+
+    by_code: dict[str, list[Any]] = {}
+    for catalog_row in catalog_rows:
+        code = _canonical_catalog_code(getattr(catalog_row, "account_code", None))
+        if code:
+            by_code.setdefault(code, []).append(catalog_row)
+
+    enriched: list[BalanzaRow] = []
+    for row in rows:
+        candidates = by_code.get(_canonical_catalog_code(row.account_code), [])
+        if len(candidates) == 1:
+            catalog = candidates[0]
+            enriched.append(
+                replace(
+                    row,
+                    parent_code=_clean(getattr(catalog, "parent_code", None)) or None,
+                    nature=_clean(getattr(catalog, "nature", None)) or None,
+                    sat_group_code=_clean(getattr(catalog, "sat_group_code", None)) or None,
+                    catalog_match="matched",
+                )
+            )
+        elif candidates:
+            enriched.append(replace(row, catalog_match="ambiguous"))
+        else:
+            enriched.append(replace(row, catalog_match="missing"))
+    return tuple(enriched)
+
+
+def _canonical_catalog_code(value: Any) -> str:
+    text = _clean(value).upper()
+    return "-".join(part for part in re.split(r"[-.\s]+", text) if part)
 
 
 def _find_header_row(rows: Iterable[tuple[Any, ...]]) -> tuple[int, dict[str, int]]:
