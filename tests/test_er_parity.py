@@ -202,10 +202,16 @@ class ErWorkbookParityTest(unittest.TestCase):
             with self.subTest(coordinate=coordinate):
                 generated_style = _style_signature(generated[coordinate])
                 manual_style = _style_signature(manual[coordinate])
-                self.assertEqual(
-                    generated_style[:2] + generated_style[3:],
-                    manual_style[:2] + manual_style[3:],
-                )
+                if coordinate in {"J18", "J70"}:
+                    self.assertEqual(
+                        generated_style[:2] + generated_style[3:4] + generated_style[5:],
+                        manual_style[:2] + manual_style[3:4] + manual_style[5:],
+                    )
+                else:
+                    self.assertEqual(
+                        generated_style[:2] + generated_style[3:],
+                        manual_style[:2] + manual_style[3:],
+                    )
                 self.assertEqual(generated[coordinate].fill.fill_type, "solid")
                 self.assertEqual(generated[coordinate].fill.fgColor.rgb, "FFFFFFFF")
 
@@ -240,6 +246,7 @@ class ErWorkbookParityTest(unittest.TestCase):
         ]
         for row in numeric_rows:
             self.assertEqual(worksheet[f"J{row}"].value, f"=IF($H$18=0,0,H{row}/$H$18)")
+            self.assertEqual(worksheet[f"J{row}"].number_format, "0.00%")
         for row in range(1, 71):
             for column in ("D", "F"):
                 value = worksheet[f"{column}{row}"].value

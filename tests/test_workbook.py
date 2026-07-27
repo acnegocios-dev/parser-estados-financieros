@@ -68,6 +68,8 @@ class ErWorkbookGenerationTest(unittest.TestCase):
 
         self.assertEqual(worksheet["H18"].number_format, "General")
         self.assertEqual(worksheet["H62"].number_format, "General")
+        self.assertEqual(worksheet["J18"].number_format, "0.00%")
+        self.assertEqual(worksheet["J62"].number_format, "0.00%")
         self.assertTrue(validation.formula_static_validation)
         self.assertFalse(validation.formula_recalculation_performed)
         self.assertIsNone(validation.formula_evaluated_error_count)

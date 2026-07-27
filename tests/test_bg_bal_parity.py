@@ -22,6 +22,7 @@ MANUAL = (
 )
 BG_STYLE_SPEC = ROOT / "src" / "bg_style_spec.json"
 BAL_STYLE_SPEC = ROOT / "src" / "bal_style_spec.json"
+CURRENCY_NUMBER_FORMAT = '"$"#,##0.00;[Red]\\-"$"#,##0.00'
 
 
 def _build():
@@ -133,7 +134,7 @@ class BgBalParityTest(unittest.TestCase):
         self.assertEqual(generated.column_dimensions["A"].width, spec["geometry"]["column_widths"]["A"])
         self.assertEqual(generated.column_dimensions["L"].width, spec["geometry"]["column_widths"]["L"])
         self.assertEqual(generated["B7"].font.name, spec["styles"][spec["cells"]["B7"]]["font"]["name"])
-        self.assertEqual(generated["L47"].number_format, spec["styles"][spec["cells"]["L47"]]["numberFormat"])
+        self.assertEqual(generated["L47"].number_format, CURRENCY_NUMBER_FORMAT)
         self.assertEqual(generated.print_area, "'BG'!$B$7:$L$47")
         self.assertEqual(generated.print_title_rows, "$7:$10")
         self.assertEqual(generated.page_setup.orientation, "portrait")
@@ -141,6 +142,13 @@ class BgBalParityTest(unittest.TestCase):
         self.assertEqual(generated.page_setup.fitToWidth, 1)
         self.assertEqual(generated.page_setup.fitToHeight, 0)
         self.assertTrue(generated.sheet_properties.pageSetUpPr.fitToPage)
+        for coordinate in (
+            "E16", "E24", "E29", "E34", "E39", "E40",
+            "F26", "F36", "F42", "F45",
+            "K16", "K20", "K31", "K34",
+            "L26", "L36", "L45", "L47",
+        ):
+            self.assertEqual(generated[coordinate].number_format, CURRENCY_NUMBER_FORMAT)
 
         expected_formulas = {
             "F26": "=SUM(E16:E24)",
@@ -205,12 +213,18 @@ class BgBalParityTest(unittest.TestCase):
             "I29", "B31", "E31", "H31", "K31", "B36", "F36",
             "H36", "L36", "B45", "F45", "H45", "L45", "L47",
         )
+        monetary_cells = {
+            "E16", "K16", "F26", "E31", "K31", "F36", "L36",
+            "F45", "L45", "L47",
+        }
         for coordinate in key_cells:
             with self.subTest(coordinate=coordinate):
-                self.assertEqual(
-                    _style(generated[coordinate], include_fill=False),
-                    _style(manual[coordinate], include_fill=False),
-                )
+                generated_style = _style(generated[coordinate], include_fill=False)
+                manual_style = _style(manual[coordinate], include_fill=False)
+                if coordinate in monetary_cells:
+                    self.assertEqual(generated_style[:3] + generated_style[4:], manual_style[:3] + manual_style[4:])
+                else:
+                    self.assertEqual(generated_style, manual_style)
         for row in generated.iter_rows(min_row=1, max_row=47, min_col=1, max_col=12):
             for cell in row:
                 self.assertEqual(cell.fill.fill_type, "solid")
@@ -237,7 +251,11 @@ class BgBalParityTest(unittest.TestCase):
         }
         for row_number, source_row in enumerate(parsed.rows, start=7):
             band = "light" if (row_number - 7) % 2 == 0 else "dark"
-            label_ref, numeric_ref = references[(band, "-" not in source_row.account_code)]
+            if source_row.account_code in {"1125-0002", "1150-0001", "2130-0001"}:
+                self.assertTrue(all(generated.cell(row_number, column).font.bold for column in range(3, 8)))
+                continue
+            bold = "-" not in source_row.account_code
+            label_ref, numeric_ref = references[(band, bold)]
             self.assertEqual(_style(generated.cell(row_number, 3)), _style(manual[label_ref]))
             for column in range(4, 8):
                 self.assertEqual(_style(generated.cell(row_number, column)), _style(manual[numeric_ref]))

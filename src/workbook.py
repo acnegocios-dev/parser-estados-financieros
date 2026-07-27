@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import calendar
+from copy import copy
 from dataclasses import dataclass, field, is_dataclass
 from datetime import datetime, timezone
 import json
@@ -22,6 +23,10 @@ BG_STYLE_SPEC_PATH = Path(__file__).with_name("bg_style_spec.json")
 BAL_STYLE_SPEC_PATH = Path(__file__).with_name("bal_style_spec.json")
 
 ERROR_TOKENS = ("#REF!", "#DIV/0!", "#VALUE!", "#NAME?", "#N/A", "#NUM!", "#NULL!")
+CURRENCY_NUMBER_FORMAT = '"$"#,##0.00;[Red]\\-"$"#,##0.00'
+PERCENT_NUMBER_FORMAT = "0.00%"
+# The approved manual renders these leaf accounts as emphasized exceptions.
+BAL_BOLD_DETAIL_ACCOUNTS = frozenset({"1125-0002", "1150-0001", "2130-0001"})
 MONTHS_ES = {
     1: "Enero",
     2: "Febrero",
@@ -301,6 +306,15 @@ def _write_bg_sheet(
     _apply_versioned_sheet_presentation(
         ws, spec, white_bounds=(1, 47, 1, 12)
     )
+    for column, ranges in {
+        "E": ((16, 24), (29, 34), (39, 40)),
+        "F": ((26, 26), (36, 36), (42, 42), (45, 45)),
+        "K": ((16, 20), (31, 34)),
+        "L": ((26, 26), (36, 36), (45, 45), (47, 47)),
+    }.items():
+        for start_row, end_row in ranges:
+            for row in range(start_row, end_row + 1):
+                ws[f"{column}{row}"].number_format = CURRENCY_NUMBER_FORMAT
     _configure_print_layout(ws, print_area="B7:L47", title_rows="7:10")
 
 
@@ -373,11 +387,18 @@ def _apply_bal_presentation(
     profiles = spec["dynamic_profiles"]
     for index, row_data in enumerate(rows, start=7):
         band = "light" if (index - 7) % 2 == 0 else "dark"
-        weight = "bold" if row_data.get("is_accumulator") else "regular"
+        account_code = str(row_data.get("account_code") or "").strip()
+        is_bold = bool(row_data.get("is_accumulator")) or account_code in BAL_BOLD_DETAIL_ACCOUNTS
+        weight = "bold" if is_bold else "regular"
         profile = profiles[f"{band}_{weight}"]
         _apply_style(ws.cell(index, 3), spec["styles"][profile["label"]])
         for column in range(4, 8):
             _apply_style(ws.cell(index, column), spec["styles"][profile["numeric"]])
+        if account_code in BAL_BOLD_DETAIL_ACCOUNTS:
+            for column in range(3, 8):
+                font = copy(ws.cell(index, column).font)
+                font.bold = True
+                ws.cell(index, column).font = font
 
     for target_row, profile_name in (
         (separator_row, "separator"),
@@ -618,6 +639,9 @@ def _style_er_sheet(ws) -> None:
     _apply_versioned_sheet_presentation(
         ws, spec, white_bounds=(1, 70, 1, 10)
     )
+    for layout in ER_LAYOUT:
+        if layout.get("kind", "line") != "section":
+            ws[f"J{int(layout['row'])}"].number_format = PERCENT_NUMBER_FORMAT
     _configure_print_layout(ws, print_area="B9:J70", title_rows="9:15")
 
 
